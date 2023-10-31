@@ -11,6 +11,7 @@ def create_features_datetime_index(df):
     df = df.copy()
     df["dayofweek"] = df.index.dayofweek
     df["quarter"] = df.index.quarter
+    df["day"] = df.index.day
     df["month"] = df.index.month
     df["year"] = df.index.year
     df["dayofyear"] = df.index.dayofyear
