@@ -11,6 +11,7 @@ def create_features_datetime_index(df):
     df["month"] = df.index.month
     df["year"] = df.index.year
     df["dayofyear"] = df.index.dayofyear
+    df["weekend"] = (df["dayofweek"] > 4).astype(int)
 
     return df
 
