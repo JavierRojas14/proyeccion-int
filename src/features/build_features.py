@@ -12,8 +12,6 @@ def create_features_datetime_index(df):
     df["year"] = df.index.year
     df["dayofyear"] = df.index.dayofyear
 
-    df = add_lag_features(df)
-
     return df
 
 
