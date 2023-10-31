@@ -1,4 +1,7 @@
 import pandas as pd
+from holidays import country_holidays
+
+FERIADOS_CHILE = country_holidays("CL")
 
 
 def create_features_datetime_index(df):
@@ -12,6 +15,7 @@ def create_features_datetime_index(df):
     df["year"] = df.index.year
     df["dayofyear"] = df.index.dayofyear
     df["weekend"] = (df["dayofweek"] > 4).astype(int)
+    df["holidays"] = df.index.to_series().apply(es_feriado)
 
     return df
 
@@ -25,3 +29,11 @@ def add_lag_features(df):
     df["lag_3_anios"] = (df.index - pd.Timedelta("1092 days")).map(target_map)
 
     return df
+
+
+def es_feriado(fecha):
+    if FERIADOS_CHILE.get(fecha):
+        return 1
+
+    else:
+        return 0
