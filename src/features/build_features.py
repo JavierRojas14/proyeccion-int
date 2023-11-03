@@ -38,3 +38,27 @@ def es_feriado(fecha):
 
     else:
         return 0
+
+
+def obtener_tabla_resumen_egresos(
+    poblacion_teorica_hospitalizados, tabla_dinamica_egresos_pais, brecha_pais
+):
+    teorica_hospitalizados_ppt = (
+        poblacion_teorica_hospitalizados.round(0).fillna(0).astype(int).astype(str)
+    )
+    tabla_dinamica_egresos_pais_ppt = tabla_dinamica_egresos_pais.copy().astype(str)
+    tabla_dinamica_egresos_pais_ppt[[i for i in range(2021, 2036)]] = "0"
+
+    brecha_pais_ppt = brecha_pais.copy()
+    brecha_pais_ppt = brecha_pais_ppt.round(2).astype(str).replace("nan", "-")
+
+    tabla_resumen_ppt = (
+        tabla_dinamica_egresos_pais_ppt
+        + "; "
+        + teorica_hospitalizados_ppt
+        + "; ("
+        + brecha_pais_ppt
+        + ")"
+    )
+
+    return tabla_resumen_ppt
