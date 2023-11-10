@@ -1,4 +1,5 @@
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 
 
@@ -13,6 +14,7 @@ class ModeloHibrido:
         self.n_splits = n_splits
         self.cv_results_1 = None
         self.cv_results_2 = None
+        self.validation_predictions = None
 
     def hyperparameter_tuning(self, X_1, X_2, y):
         # Hyperparameter tuning for modelo_1
@@ -61,11 +63,24 @@ class ModeloHibrido:
         print("  Mean Test Score:", np.mean(self.cv_results_2["mean_test_score"]))
         print("")
 
-    def fit(self, X_1, X_2, y):
+    def fit(self, X_1_cv, X_2_cv, y_cv, X_1_valid=None, X_2_valid=None, y_valid=None):
         # Perform hyperparameter tuning
-        self.hyperparameter_tuning(X_1, X_2, y)
+        self.hyperparameter_tuning(X_1_cv, X_2_cv, y_cv)
 
         print("Training process completed.")
+
+        if X_1_valid is not None and X_2_valid is not None and y_valid is not None:
+            validation_predictions = self.predict(X_1_valid, X_2_valid)
+
+            rmse_validation = np.sqrt(mean_squared_error(y_valid, validation_predictions))
+            r2_validation = r2_score(y_valid, validation_predictions)
+
+            print("Performance on Validation Set:")
+            print("  Root Mean Squared Error:", rmse_validation)
+            print("  R-squared:", r2_validation)
+            print("")
+
+            self.validation_predictions = validation_predictions
 
     def predict(self, X_1, X_2):
         y_predict_1 = self.modelo_1.predict(X_1)
