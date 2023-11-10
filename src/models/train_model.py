@@ -26,7 +26,7 @@ class ModeloHibrido:
             refit=True,
         )
         grid_search_1.fit(X_1, y)
-        self.modelo_1 = grid_search_1.best_estimator_
+        self.modelo_1 = grid_search_1
         self.best_params_1 = grid_search_1.best_params_
         self.cv_results_1 = grid_search_1.cv_results_
 
@@ -51,7 +51,7 @@ class ModeloHibrido:
             refit=True,
         )
         grid_search_2.fit(X_2, y_resid)
-        self.modelo_2 = grid_search_2.best_estimator_
+        self.modelo_2 = grid_search_2
         self.best_params_2 = grid_search_2.best_params_
         self.cv_results_2 = grid_search_2.cv_results_
 
