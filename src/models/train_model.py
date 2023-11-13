@@ -23,7 +23,7 @@ class ModeloHibrido:
             self.modelo_1,
             self.param_grid_1,
             cv=TimeSeriesSplit(n_splits=self.n_splits),
-            scoring="neg_mean_squared_error",
+            scoring="neg_root_mean_squared_error",
             return_train_score=True,
             refit=True,
         )
