@@ -1,6 +1,17 @@
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
-from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error
 import numpy as np
+
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    nonzero_elements = y_true != 0
+    return (
+        np.mean(
+            np.abs((y_true[nonzero_elements] - y_pred[nonzero_elements]) / y_true[nonzero_elements])
+        )
+        * 100
+    )
 
 
 class ModeloHibrido:
