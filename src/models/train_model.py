@@ -1,5 +1,5 @@
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 import numpy as np
 
 
@@ -34,8 +34,8 @@ class ModeloHibrido:
 
         print("Best hyperparameters for modelo_1:", self.best_params_1)
         print("CV Results for modelo_1:")
-        print("  Mean Train Score:", np.mean(self.cv_results_1["mean_train_score"]))
-        print("  Mean Test Score:", np.mean(self.cv_results_1["mean_test_score"]))
+        print("  MAE Mean Train Score:", np.mean(self.cv_results_1["mean_train_score"]))
+        print("  MAE Mean Test Score:", np.mean(self.cv_results_1["mean_test_score"]))
         print("")
 
         # Predict residuals
@@ -48,7 +48,7 @@ class ModeloHibrido:
             self.modelo_2,
             self.param_grid_2,
             cv=TimeSeriesSplit(n_splits=self.n_splits),
-            scoring="neg_mean_squared_error",
+            scoring="neg_mean_absolute_error",
             return_train_score=True,
             refit=True,
         )
@@ -59,8 +59,8 @@ class ModeloHibrido:
 
         print("Best hyperparameters for modelo_2:", self.best_params_2)
         print("CV Results for modelo_2:")
-        print("  Mean Train Score:", np.mean(self.cv_results_2["mean_train_score"]))
-        print("  Mean Test Score:", np.mean(self.cv_results_2["mean_test_score"]))
+        print("  MAE Mean Train Score:", np.mean(self.cv_results_2["mean_train_score"]))
+        print("  MAE Mean Test Score:", np.mean(self.cv_results_2["mean_test_score"]))
         print("")
 
     def fit(self, X_1_cv, X_2_cv, y_cv, X_1_valid=None, X_2_valid=None, y_valid=None):
@@ -72,12 +72,12 @@ class ModeloHibrido:
         if X_1_valid is not None and X_2_valid is not None and y_valid is not None:
             validation_predictions = self.predict(X_1_valid, X_2_valid)
 
-            rmse_validation = np.sqrt(mean_squared_error(y_valid, validation_predictions))
-            r2_validation = r2_score(y_valid, validation_predictions)
+            mae_validation = mean_absolute_error(y_valid, validation_predictions)
+            mape_validation = mean_absolute_percentage_error(y_valid, validation_predictions)
 
             print("Performance on Validation Set:")
-            print("  Root Mean Squared Error:", rmse_validation)
-            print("  R-squared:", r2_validation)
+            print("  MAE:", mae_validation)
+            print("  MAPE:", mape_validation)
             print("")
 
             self.validation_predictions = validation_predictions
