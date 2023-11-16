@@ -1,7 +1,14 @@
+import datetime
+import calendar
+
 import pandas as pd
 from holidays import country_holidays
 
 FERIADOS_CHILE = country_holidays("CL")
+
+
+def days_in_year(year=datetime.datetime.now().year):
+    return 365 + calendar.isleap(year)
 
 
 def create_features_datetime_index(df):
