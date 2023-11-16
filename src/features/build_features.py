@@ -11,6 +11,18 @@ def days_in_year(year=datetime.datetime.now().year):
     return 365 + calendar.isleap(year)
 
 
+def obtener_aumento_de_procedimiento_especifico(proceds_aumentados, glosa_procedimiento_a_incluir):
+    resumen_aumento = (
+        proceds_aumentados[
+            proceds_aumentados["Descripción_x"].str.contains(glosa_procedimiento_a_incluir)
+        ]
+        .groupby("ANIO_EGRESO")[["cantidad_procedimientos", "cantidad_procedimientos_aumentados"]]
+        .sum()
+    )
+
+    return resumen_aumento
+
+
 def create_features_datetime_index(df):
     """
     Create datetime features based on datetime index
