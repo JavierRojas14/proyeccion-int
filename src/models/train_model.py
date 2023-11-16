@@ -27,7 +27,7 @@ class ModeloHibrido:
         self.cv_results_2 = None
         self.validation_predictions = None
 
-    def hyperparameter_tuning(self, X_1, X_2, y):
+    def fit_with_hyperparameter_tuning(self, X_1, X_2, y):
         # Hyperparameter tuning for modelo_1
         print("Tuning modelo_1...")
         grid_search_1 = GridSearchCV(
@@ -73,35 +73,16 @@ class ModeloHibrido:
         print("  MAE Mean Train Score:", np.mean(self.cv_results_2["mean_train_score"]))
         print("  MAE Mean Test Score:", np.mean(self.cv_results_2["mean_test_score"]))
         print("")
-
-    def fit(
-        self,
-        X_1_cv,
-        X_2_cv,
-        y_cv,
-        X_1_valid=None,
-        X_2_valid=None,
-        y_valid=None,
-        hyperparameter_tuning=True,
-    ):
-        if hyperparameter_tuning:
-            # Perform hyperparameter tuning
-            self.hyperparameter_tuning(X_1_cv, X_2_cv, y_cv)
-
         print("Training process completed.")
 
-        if X_1_valid is not None and X_2_valid is not None and y_valid is not None:
-            validation_predictions = self.predict(X_1_valid, X_2_valid)
+    def fit(self, X_1, X_2, y):
+        self.modelo_1.fit(X_1)
 
-            mae_validation = mean_absolute_error(y_valid, validation_predictions)
-            mape_validation = mean_absolute_percentage_error(y_valid, validation_predictions)
+        # Predict Residuals
+        y_predict_1 = self.modelo_1.predict(X_1)
+        y_resid = y - y_predict_1
 
-            print("Performance on Validation Set:")
-            print("  MAE:", mae_validation)
-            print("  MAPE:", mape_validation)
-            print("")
-
-            self.validation_predictions = validation_predictions
+        self.modelo_2.fit(X_2, y_resid)
 
     def predict(self, X_1, X_2):
         y_predict_1 = self.modelo_1.predict(X_1)
@@ -110,3 +91,16 @@ class ModeloHibrido:
         yhat = y_predict_1 + y_predict_2
 
         return yhat
+
+    def check_validation_score(self, X_1_valid, X_2_valid, y_valid):
+        validation_predictions = self.predict(X_1_valid, X_2_valid)
+
+        mae_validation = mean_absolute_error(y_valid, validation_predictions)
+        mape_validation = mean_absolute_percentage_error(y_valid, validation_predictions)
+
+        print("Performance on Validation Set:")
+        print("  MAE:", mae_validation)
+        print("  MAPE:", mape_validation)
+        print("")
+
+        self.validation_predictions = validation_predictions
