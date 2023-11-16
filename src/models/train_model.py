@@ -74,9 +74,19 @@ class ModeloHibrido:
         print("  MAE Mean Test Score:", np.mean(self.cv_results_2["mean_test_score"]))
         print("")
 
-    def fit(self, X_1_cv, X_2_cv, y_cv, X_1_valid=None, X_2_valid=None, y_valid=None):
-        # Perform hyperparameter tuning
-        self.hyperparameter_tuning(X_1_cv, X_2_cv, y_cv)
+    def fit(
+        self,
+        X_1_cv,
+        X_2_cv,
+        y_cv,
+        X_1_valid=None,
+        X_2_valid=None,
+        y_valid=None,
+        hyperparameter_tuning=True,
+    ):
+        if hyperparameter_tuning:
+            # Perform hyperparameter tuning
+            self.hyperparameter_tuning(X_1_cv, X_2_cv, y_cv)
 
         print("Training process completed.")
 
