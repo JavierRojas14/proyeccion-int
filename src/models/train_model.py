@@ -76,7 +76,7 @@ class ModeloHibrido:
         print("Training process completed.")
 
     def fit(self, X_1, X_2, y):
-        self.modelo_1.fit(X_1)
+        self.modelo_1.fit(X_1, y)
 
         # Predict Residuals
         y_predict_1 = self.modelo_1.predict(X_1)
