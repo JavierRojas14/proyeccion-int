@@ -25,7 +25,7 @@ class ModeloHibrido:
         self.n_splits = n_splits
         self.cv_results_1 = None
         self.cv_results_2 = None
-        self.validation_predictions = None
+        self.test_predictions = None
 
     def fit_with_hyperparameter_tuning(self, X_1, X_2, y):
         # Hyperparameter tuning for modelo_1
@@ -92,15 +92,15 @@ class ModeloHibrido:
 
         return yhat
 
-    def check_validation_score(self, X_1_valid, X_2_valid, y_valid):
-        validation_predictions = self.predict(X_1_valid, X_2_valid)
+    def check_test_score(self, X_1_test, X_2_test, y_test):
+        test_predictions = self.predict(X_1_test, X_2_test)
 
-        mae_validation = mean_absolute_error(y_valid, validation_predictions)
-        mape_validation = mean_absolute_percentage_error(y_valid, validation_predictions)
+        mae_test = mean_absolute_error(y_test, test_predictions)
+        mape_test = mean_absolute_percentage_error(y_test, test_predictions)
 
-        print("Performance on Validation Set:")
-        print("  MAE:", mae_validation)
-        print("  MAPE:", mape_validation)
+        print("Performance on test Set:")
+        print("  MAE:", mae_test)
+        print("  MAPE:", mape_test)
         print("")
 
-        self.validation_predictions = validation_predictions
+        self.test_predictions = test_predictions
