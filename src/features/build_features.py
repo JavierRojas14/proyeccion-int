@@ -37,6 +37,7 @@ def obtener_cantidad_de_dias_laborales_por_anio(fecha_inicio, fecha_termino):
     dias_laborales["es_feriado"] = dias_laborales["fecha"].apply(es_feriado)
     dias_laborales = dias_laborales.query("es_feriado == 0")
     dias_laborales = dias_laborales.groupby(dias_laborales["fecha"].dt.year).size()
+    dias_laborales.name = "n_dias_laborales"
 
     return dias_laborales
 
