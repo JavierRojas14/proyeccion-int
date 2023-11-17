@@ -23,6 +23,24 @@ def obtener_aumento_de_procedimiento_especifico(proceds_aumentados, glosa_proced
     return resumen_aumento
 
 
+def obtener_cantidad_de_dias_laborales_por_anio(fecha_inicio, fecha_termino):
+    dias_laborales = pd.DataFrame(
+        {
+            "fecha": pd.date_range(
+                start=fecha_inicio,
+                end=fecha_termino,
+                freq="B",
+            )
+        }
+    )
+
+    dias_laborales["es_feriado"] = dias_laborales["fecha"].apply(es_feriado)
+    dias_laborales = dias_laborales.query("es_feriado == 0")
+    dias_laborales = dias_laborales.groupby(dias_laborales["fecha"].dt.year).size()
+
+    return dias_laborales
+
+
 def create_features_datetime_index(df):
     """
     Create datetime features based on datetime index
