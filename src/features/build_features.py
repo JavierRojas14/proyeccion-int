@@ -47,6 +47,8 @@ def create_features_datetime_index(df):
     Create datetime features based on datetime index
     """
     df = df.copy()
+
+    # Extract basic datetime features
     df["dayofweek"] = df.index.dayofweek
     df["quarter"] = df.index.quarter
     df["day"] = df.index.day
@@ -56,7 +58,32 @@ def create_features_datetime_index(df):
     df["weekend"] = (df["dayofweek"] > 4).astype(int)
     df["holidays"] = df.index.to_series().apply(es_feriado)
 
+    # Add season information based on Chile's temporal data
+    df["season"] = df.index.to_series().apply(get_season_chile)
+
+    # Additional time series features
+    df["is_leap_year"] = df.index.is_leap_year.astype(int)
+    df["is_month_start"] = df.index.is_month_start.astype(int)
+    df["is_month_end"] = df.index.is_month_end.astype(int)
+    df["is_quarter_start"] = df.index.is_quarter_start.astype(int)
+    df["is_quarter_end"] = df.index.is_quarter_end.astype(int)
+
     return df
+
+
+def get_season_chile(timestamp):
+    """
+    Assign season based on Chile's temporal data
+    """
+    month = timestamp.month
+    if 9 <= month <= 11:
+        return 3  # Primavera
+    elif 12 <= month <= 2:
+        return 0  # Verano
+    elif 3 <= month <= 5:
+        return 1  # Otonio
+    else:
+        return 2  # Invierno
 
 
 def add_lag_features(df, var_a_traer_valor):
