@@ -180,6 +180,9 @@ def add_time_series_columns(df):
     # Calculate holidays per month
     df["holidays_per_month"] = calcular_feriados_por_mes(df.index[0].year, df.index[-1].year, "CL")
 
+    # Calculate weekends per month
+    df["weekends_per_month"] = calcular_fin_de_semana_por_mes(df.index[0].year, df.index[-1].year)
+
     # Calculate off days per month
     df["off_days_per_month"] = df["days_in_month"] - df["holidays_per_month"]
 
@@ -195,3 +198,19 @@ def calcular_feriados_por_mes(ano_inicio, ano_termino, pais):
     feriados_periodo = feriados_periodo.resample("M").count()[0]
 
     return feriados_periodo
+
+
+def calcular_fin_de_semana_por_mes(ano_inicio, ano_termino):
+    """Funcion que permite obtener la cantidad de fin de semanas por mes"""
+    fin_de_semana = pd.DataFrame(
+        index=pd.bdate_range(
+            start=f"{ano_inicio}-01-01",
+            end=f"{ano_termino + 1}-01-01",
+            freq="C",
+            weekmask="Sat Sun",
+        )
+    )
+    fin_de_semana["n_fin_de_semanas"] = 1
+    fin_de_semana = fin_de_semana.resample("M").sum()["n_fin_de_semanas"]
+
+    return fin_de_semana
