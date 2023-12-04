@@ -2,6 +2,7 @@ import datetime
 import calendar
 
 import pandas as pd
+import numpy as np
 from holidays import country_holidays
 
 FERIADOS_CHILE = country_holidays("CL")
@@ -149,3 +150,48 @@ def obtener_tabla_resumen_egresos(
     )
 
     return tabla_resumen_ppt
+
+
+def add_time_series_columns(df):
+    """
+    Add time series related columns to a DataFrame with a DateTimeIndex aggregated by month.
+
+    Parameters:
+    - df: pandas DataFrame with a single continuous column and a DateTimeIndex aggregated by month.
+
+    Returns:
+    - pandas DataFrame with added time series related columns.
+    """
+    df = df.copy()
+    # Extract date-related information
+    df["quarter"] = df.index.quarter
+    df["month"] = df.index.month
+    df["year"] = df.index.year
+    df["season"] = (df["month"] % 12 + 3) // 3  # Calculate season based on month
+    df["is_leap_year"] = df["is_leap_year"] = df.index.is_leap_year.astype(int)
+
+    # Check if the month is part of the start/end of the quarter
+    df["is_quarter_start"] = df.index.is_quarter_start.astype(int)
+    df["is_quarter_end"] = df.index.is_quarter_end.astype(int)
+
+    # Calculate days per month
+    df["days_in_month"] = df.index.days_in_month
+
+    # Calculate holidays per month
+    df["holidays_per_month"] = calcular_feriados_por_mes(df.index[0].year, df.index[-1].year, "CL")
+
+    # Calculate off days per month
+    df["off_days_per_month"] = df["days_in_month"] - df["holidays_per_month"]
+
+    return df
+
+
+def calcular_feriados_por_mes(ano_inicio, ano_termino, pais):
+    # Obtiene feriados en el periodo
+    feriados_periodo = country_holidays(pais, years=[i for i in range(ano_inicio, ano_termino + 1)])
+    # Transforma los feriados a DataFrame y agrega conteo por mes
+    feriados_periodo = pd.DataFrame(feriados_periodo.values(), index=feriados_periodo.keys())
+    feriados_periodo.index = pd.to_datetime(feriados_periodo.index)
+    feriados_periodo = feriados_periodo.resample("M").count()[0]
+
+    return feriados_periodo
