@@ -231,3 +231,15 @@ def calcular_dias_laborales_por_mes(ano_inicio, ano_termino):
     dias_laborales = dias_laborales.resample("M").sum()["n_dias_laborales"]
 
     return dias_laborales
+
+
+def to_sequences(dataset, seq_size=1):
+    x = []
+    y = []
+
+    for i in range(len(dataset) - seq_size - 1):
+        window = dataset[i : (i + seq_size), 0]
+        x.append(window)
+        y.append(dataset[i + seq_size, 0])
+
+    return np.array(x), np.array(y)
