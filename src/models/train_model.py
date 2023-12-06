@@ -15,25 +15,25 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 class ModeloHibrido:
-    def __init__(self, modelo_1, modelo_2, param_grid_1, param_grid_2, n_splits=5):
+    def __init__(self, modelo_1, modelo_2):
         self.modelo_1 = modelo_1
         self.modelo_2 = modelo_2
-        self.param_grid_1 = param_grid_1
-        self.param_grid_2 = param_grid_2
+        self.param_grid_1 = None
+        self.param_grid_2 = None
         self.best_params_1 = None
         self.best_params_2 = None
-        self.n_splits = n_splits
+        self.n_splits = None
         self.cv_results_1 = None
         self.cv_results_2 = None
         self.test_predictions = None
 
-    def fit_with_hyperparameter_tuning(self, X_1, X_2, y):
+    def fit_with_hyperparameter_tuning(self, X_1, X_2, y, param_grid_1, param_grid_2, n_splits):
         # Hyperparameter tuning for modelo_1
         print("Tuning modelo_1...")
         grid_search_1 = GridSearchCV(
             self.modelo_1,
-            self.param_grid_1,
-            cv=TimeSeriesSplit(n_splits=self.n_splits),
+            param_grid_1,
+            cv=TimeSeriesSplit(n_splits=n_splits),
             scoring="neg_mean_absolute_error",
             return_train_score=True,
             refit=True,
@@ -57,8 +57,8 @@ class ModeloHibrido:
         print("Tuning modelo_2...")
         grid_search_2 = GridSearchCV(
             self.modelo_2,
-            self.param_grid_2,
-            cv=TimeSeriesSplit(n_splits=self.n_splits),
+            param_grid_2,
+            cv=TimeSeriesSplit(n_splits=n_splits),
             scoring="neg_mean_absolute_error",
             return_train_score=True,
             refit=True,
