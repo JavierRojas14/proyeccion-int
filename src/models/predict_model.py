@@ -53,8 +53,10 @@ def evaluar_desempeno_train_y_test_serie_tiempo(
     # Evalua rendimiento en conjunto de entrenamiento y testeo
     print("Train")
     resultados_train = evaluate_metrics(metrics, y_train, yhat_train)
+    resultados_train = {f"train_{key}": value for key, value in resultados_train.items()}
     print("Test")
     resultados_test = evaluate_metrics(metrics, y_test, yhat_test)
+    resultados_test = {f"test_{key}": value for key, value in resultados_test.items()}
 
     # Crea DataFrame con el valor real y predicho
     df_train_yhat = create_prediction_dataframe(datetime_index_train, y_train, yhat_train)
@@ -67,9 +69,11 @@ def evaluar_desempeno_train_y_test_serie_tiempo(
     df_test_yhat.plot(ax=axis[1])
 
     primera_metrica = next(iter(metrics))
+    metrica_train = f"train_{primera_metrica}"
+    metrica_test = f"test_{primera_metrica}"
 
     # Reporta el valor de la primera metrica ingresada
-    axis[0].title.set_text(f"Train - {primera_metrica} {resultados_train[primera_metrica]}")
-    axis[1].title.set_text(f"Test - {primera_metrica} {resultados_test[primera_metrica]}")
+    axis[0].title.set_text(f"Train - {primera_metrica} {resultados_train[metrica_train]}")
+    axis[1].title.set_text(f"Test - {primera_metrica} {resultados_test[metrica_test]}")
 
     return resultados_train, resultados_test, df_train_yhat, df_test_yhat, fig
