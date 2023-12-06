@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 def evaluate_metrics(metrics, predictions, targets):
@@ -44,3 +45,31 @@ def create_prediction_dataframe(ds, y_true, yhat):
     df.set_index("ds", inplace=True)
 
     return df
+
+
+def evaluar_desempeno_train_y_test_serie_tiempo(
+    datetime_index_train, y_train, yhat_train, datetime_index_test, y_test, yhat_test, metrics
+):
+    # Evalua rendimiento en conjunto de entrenamiento y testeo
+    print("Train")
+    resultados_train = evaluate_metrics(metrics, y_train, yhat_train)
+    print("Test")
+    resultados_test = evaluate_metrics(metrics, y_test, yhat_test)
+
+    # Crea DataFrame con el valor real y predicho
+    df_train_yhat = create_prediction_dataframe(datetime_index_train, y_train, yhat_train)
+    df_test_yhat = create_prediction_dataframe(datetime_index_test, y_test, yhat_test)
+
+    # Grafica valores reales y predichos
+    fig, axis = plt.subplots(2, 1, figsize=(20, 12))
+
+    df_train_yhat.plot(ax=axis[0])
+    df_test_yhat.plot(ax=axis[1])
+
+    primera_metrica = next(iter(metrics))
+
+    # Reporta el valor de la primera metrica ingresada
+    axis[0].title.set_text(f"Train - {primera_metrica} {resultados_train[primera_metrica]}")
+    axis[1].title.set_text(f"Test - {primera_metrica} {resultados_test[primera_metrica]}")
+
+    return resultados_train, resultados_test, df_train_yhat, df_test_yhat, fig
