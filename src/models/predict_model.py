@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def evaluate_metrics(metrics, predictions, targets):
     """
     Evaluate machine learning model performance using specified metrics.
@@ -22,3 +25,22 @@ def evaluate_metrics(metrics, predictions, targets):
     print()
 
     return results
+
+
+def create_prediction_dataframe(ds, y_true, yhat):
+    """
+    Create a DataFrame containing true values, predicted values, and a DateTimeIndex.
+
+    Parameters:
+    - ds (pd.Series): DateTimeIndex for the DataFrame.
+    - y_true (np.ndarray or pd.Series): True values.
+    - yhat (np.ndarray or pd.Series): Predicted values.
+
+    Returns:
+    - df (pd.DataFrame): DataFrame containing "ds," "y_true," and "yhat" columns.
+    """
+    df = pd.DataFrame({"ds": ds, "y_true": y_true, "yhat": yhat})
+
+    df.set_index("ds", inplace=True)
+
+    return df
