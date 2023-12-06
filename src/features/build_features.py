@@ -237,7 +237,7 @@ def to_sequences(dataset, seq_size=1):
     x = []
     y = []
 
-    for i in range(len(dataset) - seq_size - 1):
+    for i in range(len(dataset) - seq_size):
         window = dataset[i : (i + seq_size), 0]
         x.append(window)
         y.append(dataset[i + seq_size, 0])
