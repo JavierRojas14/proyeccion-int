@@ -72,17 +72,6 @@ def create_features_datetime_index(df):
     return df
 
 
-def add_lag_features(df, var_a_traer_valor):
-    df = df.copy()
-
-    target_map = df[var_a_traer_valor].to_dict()
-    df["lag_1_anio"] = (df.index - pd.Timedelta("364 days")).map(target_map)
-    df["lag_2_anios"] = (df.index - pd.Timedelta("728 days")).map(target_map)
-    df["lag_3_anios"] = (df.index - pd.Timedelta("1092 days")).map(target_map)
-
-    return df
-
-
 def create_lag_features(df, column_name, lag_values, fill_value=None):
     """
     Create lag features in a DataFrame for a specific column.
