@@ -1,5 +1,11 @@
 import pandas as pd
+import numpy as np
+
 import matplotlib.pyplot as plt
+
+
+def wmape(y_true, y_pred):
+    return np.sum(np.abs(y_true - y_pred)) / np.sum(np.abs(y_true))
 
 
 def evaluate_metrics(metrics, y_true, y_pred):
