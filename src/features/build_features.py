@@ -12,18 +12,6 @@ def days_in_year(year=datetime.datetime.now().year):
     return 365 + calendar.isleap(year)
 
 
-def obtener_aumento_de_procedimiento_especifico(proceds_aumentados, glosa_procedimiento_a_incluir):
-    resumen_aumento = (
-        proceds_aumentados[
-            proceds_aumentados["Descripción_x"].str.contains(glosa_procedimiento_a_incluir)
-        ]
-        .groupby("ANIO_EGRESO")[["cantidad_procedimientos", "cantidad_procedimientos_aumentados"]]
-        .sum()
-    )
-
-    return resumen_aumento
-
-
 def obtener_cantidad_de_dias_laborales_por_anio(fecha_inicio, fecha_termino):
     dias_laborales = pd.DataFrame(
         {
@@ -41,35 +29,6 @@ def obtener_cantidad_de_dias_laborales_por_anio(fecha_inicio, fecha_termino):
     dias_laborales.index = pd.to_datetime(dias_laborales.index, format="%Y")
 
     return dias_laborales
-
-
-def create_features_datetime_index(df):
-    """
-    Create datetime features based on datetime index
-    """
-    df = df.copy()
-
-    # Extract basic datetime features
-    df["dayofweek"] = df.index.dayofweek
-    df["quarter"] = df.index.quarter
-    df["day"] = df.index.day
-    df["month"] = df.index.month
-    df["year"] = df.index.year
-    df["dayofyear"] = df.index.dayofyear
-    df["weekend"] = (df["dayofweek"] > 4).astype(int)
-    df["holidays"] = df.index.to_series().apply(es_feriado)
-
-    # Add season information based on Chile's temporal data
-    df["season"] = (df.index.month % 12) // 3 + 1
-
-    # Additional time series features
-    df["is_leap_year"] = df.index.is_leap_year.astype(int)
-    df["is_month_start"] = df.index.is_month_start.astype(int)
-    df["is_month_end"] = df.index.is_month_end.astype(int)
-    df["is_quarter_start"] = df.index.is_quarter_start.astype(int)
-    df["is_quarter_end"] = df.index.is_quarter_end.astype(int)
-
-    return df
 
 
 def create_lag_features(df, column_name, lag_values, fill_value=None):
