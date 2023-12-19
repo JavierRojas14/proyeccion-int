@@ -83,3 +83,67 @@ def evaluar_desempeno_train_y_test_serie_tiempo(
     axis[1].title.set_text(f"Test - {primera_metrica} {resultados_test[metrica_test]}")
 
     return resultados_train, resultados_test, df_train_yhat, df_test_yhat, fig
+
+
+def create_prediction_dataframe_multivariate(ds, y_true, yhat, products):
+    df = pd.DataFrame(
+        {
+            "DIAG1": products,
+            "y_true": y_true,
+            "yhat": yhat,
+        },
+        index=ds,
+    )
+
+    return df
+
+
+def evaluar_desempeno_train_y_test_serie_tiempo_multivariada(
+    datetime_index_train,
+    y_train,
+    yhat_train,
+    products_train,
+    datetime_index_test,
+    y_test,
+    yhat_test,
+    products_test,
+    metrics,
+):
+    # Evalua rendimiento en conjunto de entrenamiento y testeo
+    print("Train")
+    resultados_train = evaluate_metrics(metrics, y_train, yhat_train)
+    resultados_train = {f"train_{key}": value for key, value in resultados_train.items()}
+    print("Test")
+    resultados_test = evaluate_metrics(metrics, y_test, yhat_test)
+    resultados_test = {f"test_{key}": value for key, value in resultados_test.items()}
+
+    # Crea DataFrame con el valor real y predicho
+    df_train_yhat = create_prediction_dataframe_multivariate(
+        datetime_index_train, y_train, yhat_train, products_train
+    )
+
+    df_test_yhat = create_prediction_dataframe_multivariate(
+        datetime_index_test, y_test, yhat_test, products_test
+    )
+
+    # Hace un resample mensual, sumando los egresos de todos los diags
+    df_train_yhat_resampled = df_train_yhat.resample("M").sum()
+    df_test_yhat_resampled = df_test_yhat.resample("M").sum()
+
+    # Grafica valores reales y predichos
+    fig, axis = plt.subplots(2, 1, figsize=(20, 12))
+
+    df_train_yhat_resampled.plot(ax=axis[0])
+    df_test_yhat_resampled.plot(ax=axis[1])
+
+    primera_metrica = next(iter(metrics))
+    metrica_train = f"train_{primera_metrica}"
+    metrica_test = f"test_{primera_metrica}"
+
+    # Reporta el valor de la primera metrica ingresada
+    axis[0].title.set_text(f"Train - {primera_metrica} {resultados_train[metrica_train]}")
+    axis[1].title.set_text(f"Test - {primera_metrica} {resultados_test[metrica_test]}")
+
+    plt.tight_layout()
+
+    return resultados_train, resultados_test, df_train_yhat, df_test_yhat, fig
