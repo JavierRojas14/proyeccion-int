@@ -141,7 +141,7 @@ def obtener_tabla_resumen_egresos(
     return tabla_resumen_ppt
 
 
-def add_time_series_columns(df):
+def add_time_series_columns_by_month(df):
     """
     Add time series related columns to a DataFrame with a DateTimeIndex aggregated by month.
 
