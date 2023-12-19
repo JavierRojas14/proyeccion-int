@@ -8,6 +8,28 @@ from holidays import country_holidays
 FERIADOS_CHILE = country_holidays("CL")
 
 
+def preprocesar_egresos_multivariado(df):
+    tmp = df.copy()
+
+    # Genera variable y
+    # Corresponde a los egresos del proximo mes
+    tmp["n_egresos_proximo_mes"] = tmp.groupby("DIAG1")["n_egresos"].shift(-1)
+    tmp = tmp.dropna()
+
+    # Genera variables X (Lag, Diff, Rolling Mean y Variables de Fechas)
+    tmp["lag_1"] = tmp.groupby("DIAG1")["n_egresos"].shift(1)
+    tmp["diff_1"] = tmp.groupby("DIAG1")["n_egresos"].diff(1)
+    tmp["mean_4"] = (
+        tmp.groupby("DIAG1")["n_egresos"].rolling(4).mean().reset_index(level=0, drop=True)
+    )
+
+    # Pone la fecha como indice y agrega variables relacionadas a la fecha
+    tmp = tmp.set_index("FECHA_EGRESO")
+    tmp = add_time_series_columns_by_month(tmp)
+
+    return tmp
+
+
 def days_in_year(year=datetime.datetime.now().year):
     return 365 + calendar.isleap(year)
 
