@@ -30,98 +30,6 @@ def preprocesar_egresos_multivariado(df):
     return tmp
 
 
-def days_in_year(year=datetime.datetime.now().year):
-    return 365 + calendar.isleap(year)
-
-
-def obtener_cantidad_de_dias_laborales_por_anio(fecha_inicio, fecha_termino):
-    dias_laborales = pd.DataFrame(
-        {
-            "fecha": pd.date_range(
-                start=fecha_inicio,
-                end=fecha_termino,
-                freq="B",
-            )
-        }
-    )
-
-    dias_laborales["es_feriado"] = dias_laborales["fecha"].apply(es_feriado)
-    dias_laborales = dias_laborales.query("es_feriado == 0")
-    dias_laborales = dias_laborales.groupby(dias_laborales["fecha"].dt.year).size()
-    dias_laborales.index = pd.to_datetime(dias_laborales.index, format="%Y")
-
-    return dias_laborales
-
-
-def create_lag_features(df, column_name, lag_values, fill_value=None):
-    """
-    Create lag features in a DataFrame for a specific column.
-
-    Parameters:
-    - df: DataFrame
-        The input DataFrame.
-    - column_name: str
-        The name of the column for which lag features will be created.
-    - lag_values: list of ints
-        A list of lag values.
-    - fill_value: int or None, default=None
-        The value to fill NaNs in lag features. If None, NaNs in lag features are left as NaNs.
-
-    Returns:
-    - new_df: DataFrame
-        A new DataFrame with lag features and filled NaNs in lag features.
-    """
-    new_df = df.copy()
-
-    for lag in lag_values:
-        new_column = f"{column_name}_lag_{lag}"
-        new_df[new_column] = new_df[column_name].shift(lag)
-        if fill_value is not None:
-            new_df[new_column] = new_df[new_column].fillna(fill_value)
-
-    return new_df
-
-
-def es_feriado(fecha):
-    if FERIADOS_CHILE.get(fecha):
-        return 1
-
-    else:
-        return 0
-
-
-def obtener_tabla_resumen_egresos(
-    tabla_dinamica_egresos_int,
-    tabla_dinamica_egresos_pais,
-    poblacion_teorica_hospitalizados,
-    brecha_pais,
-):
-    tabla_dinamica_egresos_int_ppt = tabla_dinamica_egresos_int.astype(str)
-    tabla_dinamica_egresos_int_ppt[[i for i in range(2021, 2036)]] = "0"
-
-    tabla_dinamica_egresos_pais_ppt = tabla_dinamica_egresos_pais.astype(str)
-    tabla_dinamica_egresos_pais_ppt[[i for i in range(2021, 2036)]] = "0"
-
-    teorica_hospitalizados_ppt = (
-        poblacion_teorica_hospitalizados.round(0).fillna(0).astype(int).astype(str)
-    )
-
-    brecha_pais_ppt = brecha_pais.round(2).astype(str).replace("nan", "-")
-
-    tabla_resumen_ppt = (
-        tabla_dinamica_egresos_int_ppt
-        + "; "
-        + tabla_dinamica_egresos_pais_ppt
-        + "; "
-        + teorica_hospitalizados_ppt
-        + "; ("
-        + brecha_pais_ppt
-        + ")"
-    )
-
-    return tabla_resumen_ppt
-
-
 def add_time_series_columns_by_month(df):
     """
     Add time series related columns to a DataFrame with a DateTimeIndex aggregated by month.
@@ -201,6 +109,98 @@ def calcular_dias_laborales_por_mes(ano_inicio, ano_termino):
     dias_laborales = dias_laborales.resample("M").sum()["n_dias_laborales"]
 
     return dias_laborales
+
+
+def create_lag_features(df, column_name, lag_values, fill_value=None):
+    """
+    Create lag features in a DataFrame for a specific column.
+
+    Parameters:
+    - df: DataFrame
+        The input DataFrame.
+    - column_name: str
+        The name of the column for which lag features will be created.
+    - lag_values: list of ints
+        A list of lag values.
+    - fill_value: int or None, default=None
+        The value to fill NaNs in lag features. If None, NaNs in lag features are left as NaNs.
+
+    Returns:
+    - new_df: DataFrame
+        A new DataFrame with lag features and filled NaNs in lag features.
+    """
+    new_df = df.copy()
+
+    for lag in lag_values:
+        new_column = f"{column_name}_lag_{lag}"
+        new_df[new_column] = new_df[column_name].shift(lag)
+        if fill_value is not None:
+            new_df[new_column] = new_df[new_column].fillna(fill_value)
+
+    return new_df
+
+
+def days_in_year(year=datetime.datetime.now().year):
+    return 365 + calendar.isleap(year)
+
+
+def obtener_cantidad_de_dias_laborales_por_anio(fecha_inicio, fecha_termino):
+    dias_laborales = pd.DataFrame(
+        {
+            "fecha": pd.date_range(
+                start=fecha_inicio,
+                end=fecha_termino,
+                freq="B",
+            )
+        }
+    )
+
+    dias_laborales["es_feriado"] = dias_laborales["fecha"].apply(es_feriado)
+    dias_laborales = dias_laborales.query("es_feriado == 0")
+    dias_laborales = dias_laborales.groupby(dias_laborales["fecha"].dt.year).size()
+    dias_laborales.index = pd.to_datetime(dias_laborales.index, format="%Y")
+
+    return dias_laborales
+
+
+def es_feriado(fecha):
+    if FERIADOS_CHILE.get(fecha):
+        return 1
+
+    else:
+        return 0
+
+
+def obtener_tabla_resumen_egresos(
+    tabla_dinamica_egresos_int,
+    tabla_dinamica_egresos_pais,
+    poblacion_teorica_hospitalizados,
+    brecha_pais,
+):
+    tabla_dinamica_egresos_int_ppt = tabla_dinamica_egresos_int.astype(str)
+    tabla_dinamica_egresos_int_ppt[[i for i in range(2021, 2036)]] = "0"
+
+    tabla_dinamica_egresos_pais_ppt = tabla_dinamica_egresos_pais.astype(str)
+    tabla_dinamica_egresos_pais_ppt[[i for i in range(2021, 2036)]] = "0"
+
+    teorica_hospitalizados_ppt = (
+        poblacion_teorica_hospitalizados.round(0).fillna(0).astype(int).astype(str)
+    )
+
+    brecha_pais_ppt = brecha_pais.round(2).astype(str).replace("nan", "-")
+
+    tabla_resumen_ppt = (
+        tabla_dinamica_egresos_int_ppt
+        + "; "
+        + tabla_dinamica_egresos_pais_ppt
+        + "; "
+        + teorica_hospitalizados_ppt
+        + "; ("
+        + brecha_pais_ppt
+        + ")"
+    )
+
+    return tabla_resumen_ppt
 
 
 def to_sequences(dataset, seq_size=1):
