@@ -17,7 +17,7 @@ def preprocesar_egresos_multivariado(df):
     tmp = tmp.dropna()
 
     # Genera variables X (Lag, Diff, Rolling Mean y Variables de Fechas)
-    tmp["lag_1"] = tmp.groupby("DIAG1")["n_egresos"].shift(1)
+    tmp = create_grouped_lag_features(tmp, "n_egresos", "DIAG1", [1, 2, 3, 11, 12, 24])
     tmp["diff_1"] = tmp.groupby("DIAG1")["n_egresos"].diff(1)
     tmp["mean_4"] = (
         tmp.groupby("DIAG1")["n_egresos"].rolling(4).mean().reset_index(level=0, drop=True)
@@ -134,6 +134,18 @@ def create_lag_features(df, column_name, lag_values, fill_value=None):
     for lag in lag_values:
         new_column = f"{column_name}_lag_{lag}"
         new_df[new_column] = new_df[column_name].shift(lag)
+        if fill_value is not None:
+            new_df[new_column] = new_df[new_column].fillna(fill_value)
+
+    return new_df
+
+
+def create_grouped_lag_features(df, column_name, grouping_column, lag_values, fill_value=None):
+    new_df = df.copy()
+
+    for lag in lag_values:
+        new_column = f"{column_name}_lag_{lag}"
+        new_df[new_column] = new_df.groupby(grouping_column)[column_name].shift(lag)
         if fill_value is not None:
             new_df[new_column] = new_df[new_column].fillna(fill_value)
 
