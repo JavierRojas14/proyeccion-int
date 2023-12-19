@@ -109,14 +109,6 @@ def evaluar_desempeno_train_y_test_serie_tiempo_multivariada(
     products_test,
     metrics,
 ):
-    # Evalua rendimiento en conjunto de entrenamiento y testeo
-    print("Train")
-    resultados_train = evaluate_metrics(metrics, y_train, yhat_train)
-    resultados_train = {f"train_{key}": value for key, value in resultados_train.items()}
-    print("Test")
-    resultados_test = evaluate_metrics(metrics, y_test, yhat_test)
-    resultados_test = {f"test_{key}": value for key, value in resultados_test.items()}
-
     # Crea DataFrame con el valor real y predicho
     df_train_yhat = create_prediction_dataframe_multivariate(
         datetime_index_train, y_train, yhat_train, products_train
@@ -129,6 +121,18 @@ def evaluar_desempeno_train_y_test_serie_tiempo_multivariada(
     # Hace un resample mensual, sumando los egresos de todos los diags
     df_train_yhat_resampled = df_train_yhat.resample("M").sum()
     df_test_yhat_resampled = df_test_yhat.resample("M").sum()
+
+    # Evalua rendimiento en conjunto de entrenamiento y testeo
+    print("Train")
+    resultados_train = evaluate_metrics(
+        metrics, df_train_yhat_resampled["y_true"], df_train_yhat_resampled["yhat"]
+    )
+    resultados_train = {f"train_{key}": value for key, value in resultados_train.items()}
+    print("Test")
+    resultados_test = evaluate_metrics(
+        metrics, df_test_yhat_resampled["y_true"], df_test_yhat_resampled["yhat"]
+    )
+    resultados_test = {f"test_{key}": value for key, value in resultados_test.items()}
 
     # Grafica valores reales y predichos
     fig, axis = plt.subplots(2, 1, figsize=(20, 12))
