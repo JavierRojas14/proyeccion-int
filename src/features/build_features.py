@@ -189,11 +189,8 @@ def obtener_tabla_resumen_egresos(
     poblacion_teorica_hospitalizados,
     brecha_pais,
 ):
-    tabla_dinamica_egresos_int_ppt = tabla_dinamica_egresos_int.astype(str)
-    tabla_dinamica_egresos_int_ppt[[i for i in range(2021, 2036)]] = "0"
-
+    # tabla_dinamica_egresos_int_ppt = tabla_dinamica_egresos_int.astype(str)
     tabla_dinamica_egresos_pais_ppt = tabla_dinamica_egresos_pais.astype(str)
-    tabla_dinamica_egresos_pais_ppt[[i for i in range(2021, 2036)]] = "0"
 
     teorica_hospitalizados_ppt = (
         poblacion_teorica_hospitalizados.round(0).fillna(0).astype(int).astype(str)
@@ -202,14 +199,14 @@ def obtener_tabla_resumen_egresos(
     brecha_pais_ppt = brecha_pais.round(2).astype(str).replace("nan", "-")
 
     tabla_resumen_ppt = (
-        tabla_dinamica_egresos_int_ppt
-        + "; "
+        # tabla_dinamica_egresos_int_ppt
+        # + "; "
+        "Pais: "
         + tabla_dinamica_egresos_pais_ppt
-        + "; "
+        + "\n Teorica:"
         + teorica_hospitalizados_ppt
-        + "; ("
+        + "\n Brecha:"
         + brecha_pais_ppt
-        + ")"
     )
 
     return tabla_resumen_ppt
