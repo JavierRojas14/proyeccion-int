@@ -84,6 +84,21 @@ def iterate_queries(dataframes, query_strings, columns_to_sum):
     return result
 
 
+def multiple_dfs(df_dict, file_name, spaces):
+    with pd.ExcelWriter(file_name) as writer:
+        row = 0
+        for key, df in df_dict.items():
+            # Creates table header and writes it
+            df_name = pd.Series()
+            df_name.name = key
+            df_name.to_excel(writer, startrow=row)
+            row += 1
+
+            # Saves DataFrame and updates row
+            df.to_excel(writer, startrow=row)
+            row += len(df.index) + spaces + 1
+
+
 def preprocesar_egresos_multivariado(df):
     tmp = df.copy()
 
