@@ -8,6 +8,82 @@ from holidays import country_holidays
 FERIADOS_CHILE = country_holidays("CL")
 
 
+def filter_dataframes(dataframes, query_string):
+    """
+    Filter a list of DataFrames using a query string.
+
+    Parameters:
+        dataframes (dict): Dictionary of pandas DataFrames.
+        query_string (str): Query string to filter the DataFrames.
+
+    Returns:
+        dict: Dictionary of filtered DataFrames.
+    """
+    filtered_dataframes = {key: df.query(query_string).copy() for key, df in dataframes.items()}
+    return filtered_dataframes
+
+
+def calculate_sum_columns(dataframes_dict, columns):
+    """
+    Calculate the sum of specified columns for each DataFrame in a dictionary.
+
+    Parameters:
+        dataframes_dict (dict): Dictionary of pandas DataFrames.
+        columns (list): List of column names for which sum needs to be calculated.
+
+    Returns:
+        pandas DataFrame: DataFrame containing the sums of specified columns for each DataFrame,
+                          with DataFrame keys as index.
+    """
+    # Dictionary to store sums for each DataFrame
+    sums = {}
+
+    # Calculate sum for each DataFrame
+    for key, df in dataframes_dict.items():
+        # Select specified columns and calculate sum
+        sums[key] = df[columns].sum()
+
+    # Concatenate sums into a DataFrame
+    result_df = pd.concat(sums, axis=1).T
+
+    return result_df
+
+
+def iterate_queries(dataframes, query_strings, columns_to_sum):
+    """
+    Iterate over a dictionary of query strings, filter DataFrames, and calculate the sum of
+    specified columns.
+
+    Parameters:
+        dataframes (dict): Dictionary of pandas DataFrames.
+        query_strings (dict): Dictionary of query strings.
+        columns_to_sum (list): List of column names for which sum needs to be calculated.
+
+    Returns:
+        dict: Dictionary containing filtered DataFrames and their sums for each query string.
+    """
+    result = {}
+
+    # Iterate over each query string
+    for query_name, query_string in query_strings.items():
+        # Filter DataFrames
+
+        # If the query isn't null
+        if query_string:
+            filtered_dfs = filter_dataframes(dataframes, query_string)
+        # If the query is null
+        else:
+            filtered_dfs = dataframes
+
+        # Calculate sum of columns for filtered DataFrames
+        sums_dfs = calculate_sum_columns(filtered_dfs, columns_to_sum)
+
+        # Store filtered DataFrames and their sums
+        result[query_name] = sums_dfs
+
+    return result
+
+
 def preprocesar_egresos_multivariado(df):
     tmp = df.copy()
 
