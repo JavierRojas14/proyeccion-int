@@ -331,13 +331,32 @@ def calculate_discharges_metrics(df):
         ("dias_estada_promedio", i) for i in dias_estada_promedio.columns
     ]
 
+    # Obtiene los dias de estada promedio de todos los anios acumulados
+    dias_estada_promedio_agrupado_en_anios = (
+        metricas["dias_estada_totales"].sum(axis=1) / metricas["n_egresos"].sum(axis=1)
+    ).to_frame()
+    dias_estada_promedio_agrupado_en_anios.columns = [
+        ("dias_estada_promedio_agrupado", "2017-2020")
+    ]
+
     # Obtiene egresos por paciente
     egresos_por_paciente = metricas["n_egresos"] / metricas["n_pacientes_distintos"]
     egresos_por_paciente.columns = [
         ("egresos_por_paciente", i) for i in egresos_por_paciente.columns
     ]
 
+    # Obtiene la cantidad de egresos por paciente de todos los anios acumulados
+    egresos_por_paciente_agrupado_en_anios = (
+        metricas["n_egresos"].sum(axis=1) / metricas["n_pacientes_distintos"].sum(axis=1)
+    ).to_frame()
+
+    egresos_por_paciente_agrupado_en_anios.columns = [
+        ("egresos_por_paciente_agrupado", "2017-2020")
+    ]
+
     metricas = pd.concat([metricas, dias_estada_promedio], axis=1)
+    metricas = pd.concat([metricas, dias_estada_promedio_agrupado_en_anios], axis=1)
     metricas = pd.concat([metricas, egresos_por_paciente], axis=1)
+    metricas = pd.concat([metricas, egresos_por_paciente_agrupado_en_anios], axis=1)
 
     return metricas
