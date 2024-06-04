@@ -313,3 +313,31 @@ def to_sequences(dataset, seq_size=1):
         y.append(dataset[i + seq_size, 0])
 
     return np.array(x), np.array(y)
+
+
+def calculate_discharges_metrics(df):
+    metricas = pd.pivot_table(
+        df,
+        index="DIAG1",
+        columns="ANO_EGRESO",
+        values=["n_pacientes_distintos", "n_egresos", "dias_estada_totales"],
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_index()
+
+    # Obtiene dias de estada promedio
+    dias_estada_promedio = metricas["dias_estada_totales"] / metricas["n_egresos"]
+    dias_estada_promedio.columns = [
+        ("dias_estada_promedio", i) for i in dias_estada_promedio.columns
+    ]
+
+    # Obtiene egresos por paciente
+    egresos_por_paciente = metricas["n_egresos"] / metricas["n_pacientes_distintos"]
+    egresos_por_paciente.columns = [
+        ("egresos_por_paciente", i) for i in egresos_por_paciente.columns
+    ]
+
+    metricas = pd.concat([metricas, dias_estada_promedio], axis=1)
+    metricas = pd.concat([metricas, egresos_por_paciente], axis=1)
+
+    return metricas
