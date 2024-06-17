@@ -99,6 +99,43 @@ def multiple_dfs(df_dict, file_name, spaces):
             row += len(df.index) + spaces + 1
 
 
+def assign_diagnosis(df, diag_code, new_diag1, new_diag2):
+    """
+    Creates two new DataFrames with the specified diagnosis assigned to DIAG1 and DIAG2 respectively,
+    and returns the original DataFrame without modifications.
+
+    Args:
+        df (pandas.DataFrame): The original DataFrame.
+        diag_code (str): The diagnosis code to be reassigned.
+        new_diag1 (str): The new diagnosis code to be assigned to DIAG1.
+        new_diag2 (str): The new diagnosis code to be assigned to DIAG2.
+
+    Returns:
+        pandas.DataFrame: The original DataFrame without modifications.
+        pandas.DataFrame: The DataFrame with the first diagnosis assigned to DIAG1.
+        pandas.DataFrame: The DataFrame with the second diagnosis assigned to DIAG2.
+    """
+
+    # Filter rows with the specified diagnosis code
+    filtered_df = df.query(f"DIAG1 == '{diag_code}'")
+
+    # Create new DataFrames with the specified diagnoses assigned to DIAG1 and DIAG2
+    df_diag1 = filtered_df.copy()
+    df_diag1["DIAG1"] = new_diag1
+
+    df_diag2 = filtered_df.copy()
+    df_diag2["DIAG1"] = new_diag2
+
+    # Filters the specified diagnosis code out of the original DataFrame
+    filtered_df_without_original_diagnosis = df.query(f"DIAG1 != '{diag_code}'")
+
+    # Combine the modified DataFrames with the original DataFrame
+    modified_df = pd.concat([filtered_df_without_original_diagnosis, df_diag1, df_diag2])
+
+    # Return the original DataFrame and the modified DataFrames
+    return modified_df
+
+
 def preprocesar_egresos_multivariado(df):
     tmp = df.copy()
 
