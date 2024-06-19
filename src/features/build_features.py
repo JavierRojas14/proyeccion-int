@@ -23,7 +23,7 @@ def filter_dataframes(dataframes, query_string):
     return filtered_dataframes
 
 
-def calculate_sum_columns(dataframes_dict, columns):
+def calculate_sum_columns_INE(dataframes_dict, columns):
     """
     Calculate the sum of specified columns for each DataFrame in a dictionary.
 
@@ -49,7 +49,22 @@ def calculate_sum_columns(dataframes_dict, columns):
     return result_df
 
 
-def iterate_queries(dataframes, query_strings, columns_to_sum):
+def calculate_sum_columns_FONASA(dataframes_dict, columns):
+    # Dictionary to store sums for each DataFrame
+    sums = {}
+
+    # Calculate sum for each DataFrame
+    for key, df in dataframes_dict.items():
+        # Select specified columns and calculate sum
+        sums[key] = df.groupby("ANO_INFORMACION")[columns].sum()
+
+    # Concatenate sums into a DataFrame
+    result_df = pd.DataFrame(sums).transpose()
+
+    return result_df
+
+
+def iterate_queries(dataframes, query_strings, columns_to_sum, tipo_poblacion="INE"):
     """
     Iterate over a dictionary of query strings, filter DataFrames, and calculate the sum of
     specified columns.
@@ -75,8 +90,15 @@ def iterate_queries(dataframes, query_strings, columns_to_sum):
         else:
             filtered_dfs = dataframes
 
-        # Calculate sum of columns for filtered DataFrames
-        sums_dfs = calculate_sum_columns(filtered_dfs, columns_to_sum)
+        # If we want to know the INE demographic
+        if tipo_poblacion == "INE":
+            # Calculate sum of columns for filtered DataFrames
+            sums_dfs = calculate_sum_columns_INE(filtered_dfs, columns_to_sum)
+
+        # If we want to know the FONASA demographic
+        elif tipo_poblacion == "FONASA":
+            # Calculate sum of columns for FONASA filtered DataFrames
+            sums_dfs = calculate_sum_columns_FONASA(filtered_dfs, columns_to_sum)
 
         # Store filtered DataFrames and their sums
         result[query_name] = sums_dfs
