@@ -8,6 +8,28 @@ from dotenv import find_dotenv, load_dotenv
 import pandas as pd
 import numpy as np
 
+import glob
+
+
+TRANSFORMACION_ESTRATOS_FONASA = TRANSFORMACION_ESTRATOS_FONASA = {
+    "DE ANTOFAGASTA": "Antofagasta",
+    "DE ARICA Y PARINACOTA": "Arica y Parinacota",
+    "DE ATACAMA": "Atacama",
+    "DE AYSÉN DEL GRAL. C. IBÁÑEZ DEL CAMPO": "Aysén del General Carlos Ibáñez del Campo",
+    "DE COQUIMBO": "Coquimbo",
+    "DE LA ARAUCANÍA": "La Araucanía",
+    "DE LOS LAGOS": "Los Lagos",
+    "DE LOS RÍOS": "Los Ríos",
+    "DE MAGALLANES Y DE LA ANTÁRTICA CHILENA": "Magallanes y de la Antártica Chilena",
+    "DE TARAPACÁ": "Tarapacá",
+    "DE VALPARAÍSO": "Valparaíso",
+    "DE ÑUBLE": "Ñuble",
+    "DEL BÍOBÍO": "Biobío",
+    "DEL LIBERTADOR GENERAL BERNARDO O'HIGGINS": "Libertador General Bernardo O'Higgins",
+    "DEL MAULE": "Maule",
+    "METROPOLITANA DE SANTIAGO": "Metropolitana de Santiago",
+}
+
 
 def procesar_ine(ruta_base_de_datos):
     print("> Procesando Base de datos INE")
@@ -30,6 +52,50 @@ def procesar_ine(ruta_base_de_datos):
     return df
 
 
+def procesar_fonasa(ruta_base_de_datos):
+    print("> Procesando Base de datos FONASA")
+    # Indica la ruta de los archivos FONASA
+    ruta_a_fonasa = f"{ruta_base_de_datos}/2_poblacion_fonasa/*.csv"
+
+    # Encuentra todos los archivos que coinciden con el patrón
+    archivos = glob.glob(ruta_a_fonasa)
+
+    # Lee y concatena todos los archivos CSV
+    df_fonasa = pd.concat(pd.read_csv(archivo, encoding="latin-1") for archivo in archivos)
+
+    # Extrae el año de la columna MES_INFORMACION
+    df_fonasa["ANO_INFORMACION"] = df_fonasa["MES_INFORMACION"].astype(str).str[:4]
+
+    # Formatea la columna REGION
+    df_fonasa["REGION"] = df_fonasa["REGION"].str.upper().str.strip()
+    df_fonasa["REGION"] = df_fonasa["REGION"].replace(
+        {
+            "ÑUBLE": "DE ÑUBLE",
+            "DEL LIBERTADOR B. O'HIGGINS": "DEL LIBERTADOR GENERAL BERNARDO O'HIGGINS",
+        }
+    )
+
+    # Elimina los registros con REGION desconocida o nula
+    df_fonasa = df_fonasa.query("REGION != 'DESCONOCIDA'").copy()
+    df_fonasa = df_fonasa.query("REGION.notna()").copy()
+
+    # Aplica la transformación de estratos
+    df_fonasa["REGION"] = df_fonasa["REGION"].replace(TRANSFORMACION_ESTRATOS_FONASA)
+
+    # Formatea otras columnas
+    df_fonasa["SEXO"] = df_fonasa["SEXO"].str.upper().str.strip()
+    df_fonasa["SERVICIO_SALUD"] = df_fonasa["SERVICIO_SALUD"].str.upper().str.strip()
+    df_fonasa["COMUNA"] = df_fonasa["COMUNA"].str.upper().str.strip()
+
+    # Limpia y transforma la columna EDAD_TRAMO
+    df_fonasa["EDAD_TRAMO"] = df_fonasa["EDAD_TRAMO"].replace(
+        {"Más de 99 años": "99 años", "S.I.": "-1"}
+    )
+    df_fonasa["EDAD_TRAMO"] = df_fonasa["EDAD_TRAMO"].str.split().str[0].astype(int)
+
+    return df_fonasa
+
+
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
@@ -40,9 +106,17 @@ def main(input_filepath, output_filepath):
     logger = logging.getLogger(__name__)
     logger.info("making final data set from raw data")
 
+    # Procesa INE y FONASA
     ine_procesada = procesar_ine(input_filepath)
+    fonasa_procesada = procesar_fonasa(input_filepath)
+
+    # Define nombres de archivos output de INE y FONASA
     ruta_output_ine = f"{output_filepath}/df_ine.csv"
+    ruta_output_fonasa = f"{output_filepath}/df_fonasa.csv"
+
+    # Guarda base INE y FONASA
     ine_procesada.to_csv(ruta_output_ine)
+    fonasa_procesada.to_csv(ruta_output_fonasa)
 
 
 if __name__ == "__main__":
