@@ -413,9 +413,9 @@ def calculate_discharges_metrics(df):
         ("egresos_por_paciente_agrupado", "2017-2020")
     ]
 
-    metricas = pd.concat([metricas, dias_estada_promedio], axis=1)
-    metricas = pd.concat([metricas, dias_estada_promedio_agrupado_en_anios], axis=1)
     metricas = pd.concat([metricas, egresos_por_paciente], axis=1)
     metricas = pd.concat([metricas, egresos_por_paciente_agrupado_en_anios], axis=1)
+    metricas = pd.concat([metricas, dias_estada_promedio], axis=1)
+    metricas = pd.concat([metricas, dias_estada_promedio_agrupado_en_anios], axis=1)
 
     return metricas
