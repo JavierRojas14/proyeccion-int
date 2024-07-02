@@ -1,6 +1,7 @@
+name: int-proyeccion
 channels:
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - holidays=0.29
   - ipykernel=6.25.0
@@ -16,6 +17,7 @@ dependencies:
   - scikit-learn=1.2.2
   - seaborn=0.12.2
   - statsmodels=0.14.0
-  - xgboost=1.7.3
   - tensorflow
-name: int-proyeccion
+  - xgboost=1.7.3
+  - python-dotenv
+prefix: /opt/anaconda3/envs/int-proyeccion
