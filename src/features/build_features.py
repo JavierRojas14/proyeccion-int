@@ -8,102 +8,119 @@ from holidays import country_holidays
 FERIADOS_CHILE = country_holidays("CL")
 
 
-def filter_dataframes(dataframes, query_string):
+def procesar_resultados_por_estrato_y_grupos_etarios(
+    dataframes, consultas, columnas, tipo_poblacion
+):
     """
-    Filter a list of DataFrames using a query string.
+    Procesa los resultados por estratos y grupos etarios para un tipo de población dado.
 
-    Parameters:
-        dataframes (dict): Dictionary of pandas DataFrames.
-        query_string (str): Query string to filter the DataFrames.
+    Parámetros:
+        dataframes (dict): Diccionario de DataFrames de pandas. Contiene los distintos estratos
+        a calcular ("Pais", "Region", "SSMO", etc)
+        consultas (dict): Diccionario de consultas. Filtra por Grupos etarios
+        (">15 anios", "entre 20 y 25", etc)
+        columnas (list): Lista de nombres de columnas para calcular la suma. Puede ser
+        "CUENTA BENEFICIARIO" o los anios a sumar en INE
+        tipo_poblacion (str): Tipo de población ("INE" o "FONASA").
 
-    Returns:
-        dict: Dictionary of filtered DataFrames.
+    Retorna:
+        DataFrame: DataFrame concatenado con los resultados procesados y el índice restablecido.
     """
-    filtered_dataframes = {key: df.query(query_string).copy() for key, df in dataframes.items()}
-    return filtered_dataframes
+    # Obtener resultados por estratos y grupos etarios
+    poblaciones_estratos_calculados = iterar_consultas(
+        dataframes, consultas, columnas, tipo_poblacion
+    )
+
+    # Unir todos los resultados en un único DataFrame
+    poblaciones_estratos_calculados = pd.concat(poblaciones_estratos_calculados)
+    poblaciones_estratos_calculados = poblaciones_estratos_calculados.reset_index(
+        names=["Edad Incidencia", "Estrato"]
+    )
+
+    return poblaciones_estratos_calculados
 
 
-def calculate_sum_columns_INE(dataframes_dict, columns):
+def iterar_consultas(dataframes, consultas, columnas_a_sumar, tipo_poblacion="INE"):
     """
-    Calculate the sum of specified columns for each DataFrame in a dictionary.
+    Iterar sobre un diccionario de consultas, filtrar DataFrames y calcular la suma de columnas
+    especificadas.
 
-    Parameters:
-        dataframes_dict (dict): Dictionary of pandas DataFrames.
-        columns (list): List of column names for which sum needs to be calculated.
+    Parámetros:
+        dataframes (dict): Diccionario de DataFrames de pandas.
+        consultas (dict): Diccionario de consultas.
+        columnas_a_sumar (list): Lista de nombres de columnas para calcular la suma.
 
-    Returns:
-        pandas DataFrame: DataFrame containing the sums of specified columns for each DataFrame,
-                          with DataFrame keys as index.
+    Retorna:
+        dict: Diccionario que contiene DataFrames filtrados y sus sumas para cada consulta.
     """
-    # Dictionary to store sums for each DataFrame
-    sums = {}
+    resultado = {}
 
-    # Calculate sum for each DataFrame
-    for key, df in dataframes_dict.items():
-        # Select specified columns and calculate sum
-        sums[key] = df[columns].sum()
-
-    # Concatenate sums into a DataFrame
-    result_df = pd.concat(sums, axis=1).T
-
-    return result_df
-
-
-def calculate_sum_columns_FONASA(dataframes_dict, columns):
-    # Dictionary to store sums for each DataFrame
-    sums = {}
-
-    # Calculate sum for each DataFrame
-    for key, df in dataframes_dict.items():
-        # Select specified columns and calculate sum
-        sums[key] = df.groupby("ANO_INFORMACION")[columns].sum()
-
-    # Concatenate sums into a DataFrame
-    result_df = pd.DataFrame(sums).transpose()
-
-    return result_df
-
-
-def iterate_queries(dataframes, query_strings, columns_to_sum, tipo_poblacion="INE"):
-    """
-    Iterate over a dictionary of query strings, filter DataFrames, and calculate the sum of
-    specified columns.
-
-    Parameters:
-        dataframes (dict): Dictionary of pandas DataFrames.
-        query_strings (dict): Dictionary of query strings.
-        columns_to_sum (list): List of column names for which sum needs to be calculated.
-
-    Returns:
-        dict: Dictionary containing filtered DataFrames and their sums for each query string.
-    """
-    result = {}
-
-    # Iterate over each query string
-    for query_name, query_string in query_strings.items():
-        # Filter DataFrames
-
-        # If the query isn't null
-        if query_string:
-            filtered_dfs = filter_dataframes(dataframes, query_string)
-        # If the query is null
+    for nombre_consulta, consulta in consultas.items():
+        # Filtrar DataFrames
+        if consulta:
+            dfs_filtrados = filtrar_dataframes(dataframes, consulta)
         else:
-            filtered_dfs = dataframes
+            dfs_filtrados = dataframes
 
-        # If we want to know the INE demographic
+        # Calcular suma de columnas según el tipo de población
         if tipo_poblacion == "INE":
-            # Calculate sum of columns for filtered DataFrames
-            sums_dfs = calculate_sum_columns_INE(filtered_dfs, columns_to_sum)
-
-        # If we want to know the FONASA demographic
+            suma_dfs = calcular_suma_columnas(dfs_filtrados, columnas_a_sumar)
         elif tipo_poblacion == "FONASA":
-            # Calculate sum of columns for FONASA filtered DataFrames
-            sums_dfs = calculate_sum_columns_FONASA(filtered_dfs, columns_to_sum)
+            suma_dfs = calcular_suma_columnas_fonasa(dfs_filtrados, columnas_a_sumar)
 
-        # Store filtered DataFrames and their sums
-        result[query_name] = sums_dfs
+        resultado[nombre_consulta] = suma_dfs
 
-    return result
+    return resultado
+
+
+def calcular_suma_columnas(dataframes_dict, columnas):
+    """
+    Calcular la suma de columnas especificadas para cada DataFrame en un diccionario.
+
+    Parámetros:
+        dataframes_dict (dict): Diccionario de DataFrames de pandas.
+        columnas (list): Lista de nombres de columnas para calcular la suma.
+
+    Retorna:
+        DataFrame: DataFrame que contiene las sumas de las columnas especificadas para
+        cada DataFrame, con claves del DataFrame como índice.
+    """
+    sumas = {key: df[columnas].sum() for key, df in dataframes_dict.items()}
+    return pd.DataFrame(sumas).T
+
+
+def calcular_suma_columnas_fonasa(dataframes_dict, columnas):
+    """
+    Calcular la suma de columnas especificadas para cada DataFrame en un diccionario agrupado
+    por 'ANO_INFORMACION'.
+
+    Parámetros:
+        dataframes_dict (dict): Diccionario de DataFrames de pandas.
+        columnas (list): Lista de nombres de columnas para calcular la suma.
+
+    Retorna:
+        DataFrame: DataFrame que contiene las sumas de las columnas especificadas para
+        cada DataFrame, con claves del DataFrame como índice.
+    """
+
+    sumas = {
+        key: df.groupby("ANO_INFORMACION")[columnas].sum() for key, df in dataframes_dict.items()
+    }
+    return pd.DataFrame(sumas).T
+
+
+def filtrar_dataframes(dataframes, consulta):
+    """
+    Filtrar una lista de DataFrames usando una consulta.
+
+    Parámetros:
+        dataframes (dict): Diccionario de DataFrames de pandas.
+        consulta (str): Consulta para filtrar los DataFrames.
+
+    Retorna:
+        dict: Diccionario de DataFrames filtrados.
+    """
+    return {key: df.query(consulta).copy() for key, df in dataframes.items()}
 
 
 def obtener_resumen_poblacion_pais(dataframe, anios_para_porcentaje):
