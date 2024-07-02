@@ -106,6 +106,43 @@ def iterate_queries(dataframes, query_strings, columns_to_sum, tipo_poblacion="I
     return result
 
 
+def obtener_resumen_poblacion_pais(dataframe, anios_para_porcentaje):
+    # Obtiene los estratos que se quieren comparar para calcular el % FONASA
+    poblacion_a_comparar = dataframe.query(f"`Edad Incidencia` == 'todos'").set_index("Estrato")[
+        anios_para_porcentaje
+    ]
+
+    # Obtiene la suma totales por estrato
+    poblacion_a_comparar["suma_poblacion"] = poblacion_a_comparar.sum(axis=1)
+
+    return poblacion_a_comparar
+
+
+def obtener_porcentaje_de_fonasa_pais(poblaciones_ine, poblaciones_fonasa, anios_para_porcentaje):
+    # Obtiene poblacion pais INE
+    resumen_poblacion_pais_INE = obtener_resumen_poblacion_pais(
+        poblaciones_ine, anios_para_porcentaje
+    )
+
+    # Obtiene poblacion pais FONASA
+    resumen_poblacion_pais_FONASA = obtener_resumen_poblacion_pais(
+        poblaciones_fonasa, anios_para_porcentaje
+    )
+
+    # Obtiene el porcentaje de FONASA por cada estrato a nivel pais
+    porcentaje_fonasa = resumen_poblacion_pais_FONASA / resumen_poblacion_pais_INE
+    porcentaje_fonasa = porcentaje_fonasa.rename(
+        columns={"suma_poblacion": "porcentaje_fonasa_acumulado"}
+    )
+
+    # Obtiene el resumen total del % de FONASA a nivel pais
+    resumen_porcentaje_fonasa = pd.concat(
+        [resumen_poblacion_pais_INE, resumen_poblacion_pais_FONASA, porcentaje_fonasa], axis=1
+    )
+
+    return resumen_porcentaje_fonasa
+
+
 def multiple_dfs(df_dict, file_name, spaces):
     with pd.ExcelWriter(file_name) as writer:
         row = 0
