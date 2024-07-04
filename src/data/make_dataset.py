@@ -8,6 +8,8 @@ from dotenv import find_dotenv, load_dotenv
 import pandas as pd
 import numpy as np
 
+import polars as pl
+
 import glob
 
 
@@ -28,6 +30,18 @@ TRANSFORMACION_ESTRATOS_FONASA = TRANSFORMACION_ESTRATOS_FONASA = {
     "DEL LIBERTADOR GENERAL BERNARDO O'HIGGINS": "Libertador General Bernardo O'Higgins",
     "DEL MAULE": "Maule",
     "METROPOLITANA DE SANTIAGO": "Metropolitana de Santiago",
+}
+
+CAMBIOS_COLUMNAS_INNOMINADOS = {
+    "MES_INFORMACION": "MES_INFORMACION",
+    "TITULAR_CARGA": "TITULAR_CARGA",
+    "TRAMO_FONASA": "TRAMO",
+    "SEXO": "SEXO",
+    "EDAD_TRAMO": "EDAD_TRAMO",
+    "NACIONALIDAD": "NACIONALIDAD",
+    "TIPO_ASEGURADO": "TIPO_ASEGURADO",
+    "REGIÓN_BENEFICIARIO": "REGION",
+    "COMUNA_BENEFICIARIO": "COMUNA",
 }
 
 
@@ -96,6 +110,25 @@ def procesar_fonasa(ruta_base_de_datos):
     return df_fonasa
 
 
+def procesar_FONASA_innominadas(ruta_base_de_datos):
+    print("> Procesando bases de datos FONASA innominadas")
+
+    # Define la ruta de archivos innominados
+    ruta_a_fonasa = (
+        f"{ruta_base_de_datos}/2_poblacion_fonasa/innominados/Beneficiarios Fonasa 2023.csv"
+    )
+
+    df = pl.read_csv(ruta_a_fonasa, encoding="latin-1")
+
+    cuenta_fonasa = (
+        df.rename(CAMBIOS_COLUMNAS_INNOMINADOS)
+        .group_by(CAMBIOS_COLUMNAS_INNOMINADOS.values())
+        .len(name="CUENTA_BENEFICIARIOS")
+    )
+
+    return cuenta_fonasa
+
+
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
@@ -105,6 +138,13 @@ def main(input_filepath, output_filepath):
     """
     logger = logging.getLogger(__name__)
     logger.info("making final data set from raw data")
+
+    # Procesa Y guarda FONASA innominados
+    fonasa_innonimados_procesada = procesar_FONASA_innominadas(input_filepath)
+    ruta_output_fonasa_innominados = (
+        f"{input_filepath}/2_poblacion_fonasa/Beneficiarios Fonasa 2023.csv"
+    )
+    fonasa_innonimados_procesada.write_csv(ruta_output_fonasa_innominados)
 
     # Procesa INE y FONASA
     ine_procesada = procesar_ine(input_filepath)
