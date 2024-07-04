@@ -44,6 +44,18 @@ CAMBIOS_COLUMNAS_INNOMINADOS = {
     "COMUNA_BENEFICIARIO": "COMUNA",
 }
 
+COLUMNAS_A_OCUPAR_FONASA = [
+    "MES_INFORMACION",
+    "TITULAR_CARGA",
+    "TRAMO",
+    "SEXO",
+    "EDAD_TRAMO",
+    "NACIONALIDAD",
+    "REGION",
+    "COMUNA",
+    "CUENTA_BENEFICIARIOS",
+]
+
 
 def procesar_ine(ruta_base_de_datos):
     print("> Procesando Base de datos INE")
@@ -75,7 +87,10 @@ def procesar_fonasa(ruta_base_de_datos):
     archivos = glob.glob(ruta_a_fonasa)
 
     # Lee y concatena todos los archivos CSV
-    df_fonasa = pd.concat(pd.read_csv(archivo, encoding="latin-1") for archivo in archivos)
+    df_fonasa = pd.concat(
+        pd.read_csv(archivo, encoding="latin-1", usecols=COLUMNAS_A_OCUPAR_FONASA)
+        for archivo in archivos
+    )
 
     # Extrae el año de la columna MES_INFORMACION
     df_fonasa["ANO_INFORMACION"] = df_fonasa["MES_INFORMACION"].astype(str).str[:4]
@@ -98,12 +113,12 @@ def procesar_fonasa(ruta_base_de_datos):
 
     # Formatea otras columnas
     df_fonasa["SEXO"] = df_fonasa["SEXO"].str.upper().str.strip()
-    df_fonasa["SERVICIO_SALUD"] = df_fonasa["SERVICIO_SALUD"].str.upper().str.strip()
+    # df_fonasa["SERVICIO_SALUD"] = df_fonasa["SERVICIO_SALUD"].str.upper().str.strip()
     df_fonasa["COMUNA"] = df_fonasa["COMUNA"].str.upper().str.strip()
 
     # Limpia y transforma la columna EDAD_TRAMO
     df_fonasa["EDAD_TRAMO"] = df_fonasa["EDAD_TRAMO"].replace(
-        {"Más de 99 años": "99 años", "S.I.": "-1"}
+        {"Más de 99 años": "99 años", "S.I.": "-1", "Sin información": "-1"}
     )
     df_fonasa["EDAD_TRAMO"] = df_fonasa["EDAD_TRAMO"].str.split().str[0].astype(int)
 
@@ -144,7 +159,9 @@ def main(input_filepath, output_filepath):
     ruta_output_fonasa_innominados = (
         f"{input_filepath}/2_poblacion_fonasa/Beneficiarios Fonasa 2023.csv"
     )
-    fonasa_innonimados_procesada.write_csv(ruta_output_fonasa_innominados)
+    fonasa_innonimados_procesada.to_pandas().to_csv(
+        ruta_output_fonasa_innominados, encoding="latin-1"
+    )
 
     # Procesa INE y FONASA
     ine_procesada = procesar_ine(input_filepath)
