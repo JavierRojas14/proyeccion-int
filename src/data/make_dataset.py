@@ -95,6 +95,9 @@ def procesar_fonasa(ruta_base_de_datos):
     # Extrae el año de la columna MES_INFORMACION
     df_fonasa["ANO_INFORMACION"] = df_fonasa["MES_INFORMACION"].astype(str).str[:4]
 
+    # Ordena la base de datos segun el anio de informacion
+    df_fonasa = df_fonasa.sort_values("ANO_INFORMACION")
+
     # Formatea la columna REGION
     df_fonasa["REGION"] = df_fonasa["REGION"].str.upper().str.strip()
     df_fonasa["REGION"] = df_fonasa["REGION"].replace(
