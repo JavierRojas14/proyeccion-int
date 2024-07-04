@@ -72,6 +72,9 @@ def procesar_ine(ruta_base_de_datos):
     # Renombra columna de hombres o mujeres
     df = df.rename(columns={"Sexo\n1=Hombre\n2=Mujer": "hombre_mujer"})
 
+    # Convierte el nombre de las comunas a title y elimina espacios en blanco
+    df["Nombre Comuna"] = df["Nombre Comuna"].str.title().str.strip()
+
     # Indica si es adulto o infantil
     df["grupo_etario_poblacion"] = np.where(df["Edad"] >= 15, "Adulto", "Infantil")
 
@@ -117,7 +120,7 @@ def procesar_fonasa(ruta_base_de_datos):
     # Formatea otras columnas
     df_fonasa["SEXO"] = df_fonasa["SEXO"].str.upper().str.strip()
     # df_fonasa["SERVICIO_SALUD"] = df_fonasa["SERVICIO_SALUD"].str.upper().str.strip()
-    df_fonasa["COMUNA"] = df_fonasa["COMUNA"].str.upper().str.strip()
+    df_fonasa["COMUNA"] = df_fonasa["COMUNA"].str.title().str.strip()
 
     # Limpia y transforma la columna EDAD_TRAMO
     df_fonasa["EDAD_TRAMO"] = df_fonasa["EDAD_TRAMO"].replace(
