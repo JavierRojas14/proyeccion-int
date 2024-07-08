@@ -433,7 +433,7 @@ def calculate_discharges_metrics(df):
         df,
         index="DIAG1",
         columns="ANO_EGRESO",
-        values=["n_pacientes_distintos", "n_egresos", "dias_estada_totales"],
+        values=["n_pacientes_distintos", "n_egresos", "dias_estada_totales", "n_int_q"],
         aggfunc="sum",
         fill_value=0,
     ).sort_index()
@@ -449,7 +449,7 @@ def calculate_discharges_metrics(df):
         metricas["dias_estada_totales"].sum(axis=1) / metricas["n_egresos"].sum(axis=1)
     ).to_frame()
     dias_estada_promedio_agrupado_en_anios.columns = [
-        ("dias_estada_promedio_agrupado", "2017-2020")
+        ("dias_estada_promedio_agrupado", "2017-2019")
     ]
 
     # Obtiene egresos por paciente
@@ -464,12 +464,24 @@ def calculate_discharges_metrics(df):
     ).to_frame()
 
     egresos_por_paciente_agrupado_en_anios.columns = [
-        ("egresos_por_paciente_agrupado", "2017-2020")
+        ("egresos_por_paciente_agrupado", "2017-2019")
     ]
+
+    # Obtiene la cantidad de int. q. por egresos
+    int_q_por_egresos = metricas["n_int_q"] / metricas["n_egresos"]
+    int_q_por_egresos.columns = [("porcentaje_de_int_q", i) for i in int_q_por_egresos.columns]
+
+    # Obtiene el porcentaje de int. q. acumuladas entre el periodo analizado
+    int_q_agrupadas = (
+        metricas["n_int_q"].sum(axis=1) / metricas["n_egresos"].sum(axis=1)
+    ).to_frame()
+    int_q_agrupadas.columns = [("porcentaje_int_q_agrupado", "2017-2019")]
 
     metricas = pd.concat([metricas, egresos_por_paciente], axis=1)
     metricas = pd.concat([metricas, egresos_por_paciente_agrupado_en_anios], axis=1)
     metricas = pd.concat([metricas, dias_estada_promedio], axis=1)
     metricas = pd.concat([metricas, dias_estada_promedio_agrupado_en_anios], axis=1)
+    metricas = pd.concat([metricas, int_q_por_egresos], axis=1)
+    metricas = pd.concat([metricas, int_q_agrupadas], axis=1)
 
     return metricas
