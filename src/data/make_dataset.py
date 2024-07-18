@@ -150,6 +150,68 @@ def procesar_FONASA_innominadas(ruta_base_de_datos):
     return cuenta_fonasa
 
 
+### Planilla de Incidencias ###
+
+
+def leer_planilla_incidencias(ruta_planilla, columnas_a_utilizar):
+    """
+    Lee la planilla de incidencias y devuelve un DataFrame filtrado por las columnas especificadas.
+    """
+    return pd.read_excel(ruta_planilla, usecols=columnas_a_utilizar)
+
+
+def filtrar_diagnosticos_limitados_por_oferta(df_incidencias):
+    """
+    Filtra los diagnósticos limitados por oferta de un DataFrame de incidencias.
+    """
+    incidencias_sin_acotados_por_oferta = df_incidencias.query(
+        "`Estadística` != 'Acotado por oferta'"
+    )
+    acotados_por_oferta = df_incidencias.query("`Estadística` == 'Acotado por oferta'")
+    return incidencias_sin_acotados_por_oferta, acotados_por_oferta
+
+
+def convertir_incidencia_a_numeros(df_incidencias):
+    """
+    Convierte las incidencias a números e imputa las faltantes como NaN.
+    """
+    df_incidencias["Casos (Cada 100.000)"] = pd.to_numeric(
+        df_incidencias["Casos (Cada 100.000)"], errors="coerce"
+    )
+    return df_incidencias
+
+
+def calcular_rate_incidencia(df_incidencias):
+    """
+    Calcula la fracción de la incidencia para multiplicar con la población directamente.
+    """
+    df_incidencias["rate_incidencia"] = df_incidencias["Casos (Cada 100.000)"] / 100000
+    return df_incidencias
+
+
+def corregir_prevalencias(df_incidencias):
+    """
+    Corrige las prevalencias en 5 años.
+    """
+    idx_prevalencias = df_incidencias["Estadística"] == "Prevalencia"
+    df_incidencias.loc[idx_prevalencias, "rate_incidencia"] = (
+        df_incidencias.loc[idx_prevalencias, "rate_incidencia"] / 5
+    )
+    return df_incidencias
+
+
+def procesar_incidencias(ruta_planilla, columnas_a_utilizar):
+    """
+    Procesa las incidencias desde la lectura hasta la corrección de prevalencias.
+    """
+    incidencias = leer_planilla_incidencias(ruta_planilla, columnas_a_utilizar)
+    incidencias, limitados_por_oferta = filtrar_diagnosticos_limitados_por_oferta(incidencias)
+    incidencias = convertir_incidencia_a_numeros(incidencias)
+    incidencias = calcular_rate_incidencia(incidencias)
+    incidencias = corregir_prevalencias(incidencias)
+    return incidencias, limitados_por_oferta
+
+
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
