@@ -1,6 +1,5 @@
 name: int-proyeccion
 channels:
-  - conda-forge
   - defaults
 dependencies:
   - holidays=0.29
@@ -11,14 +10,16 @@ dependencies:
   - openpyxl=3.0.10
   - pandas=2.1.1
   - pmdarima=2.0.3
+  - polars
   - prophet=1.1.4
+  - pyarrow
+  - python-dotenv
   - python==3.11.8
   - pyyaml=6.0.1
   - scikit-learn=1.2.2
   - seaborn=0.12.2
   - statsmodels=0.14.0
   - xgboost=1.7.3
-  - python-dotenv
-  - polars
-  - pyarrow
-prefix: /opt/anaconda3/envs/int-proyeccion
+  - tabulate
+  - click
+prefix: C:\Users\javie\anaconda3\envs\int-proyeccion
