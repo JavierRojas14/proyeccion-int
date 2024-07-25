@@ -2,6 +2,7 @@ import datetime
 import calendar
 
 import pandas as pd
+import polars as pl
 import numpy as np
 from holidays import country_holidays
 
@@ -428,60 +429,59 @@ def to_sequences(dataset, seq_size=1):
     return np.array(x), np.array(y)
 
 
-def calculate_discharges_metrics(df):
-    metricas = pd.pivot_table(
-        df,
+def obtener_metricas_egresos(df, agrupacion):
+    resumen = (
+        df.group_by(agrupacion).agg(
+            [
+                pl.col("DIAG1").count().alias("n_egresos"),
+                pl.col("ID_PACIENTE").n_unique().alias("n_pacientes_distintos"),
+                pl.col("DIAS_ESTADA").sum().alias("dias_estada_totales"),
+            ]
+        )
+    ).with_columns(
+        [
+            (pl.col("n_egresos") / pl.col("n_pacientes_distintos")).alias("egresos_por_paciente"),
+            (pl.col("dias_estada_totales") / pl.col("n_egresos")).alias("dias_estada_promedio"),
+        ]
+    )
+
+    return resumen
+
+
+def calcular_resumen_metricas_desagregadas_y_agrupadas_en_anios(df, ano_inicio, ano_termino):
+    df_filtrada = df.filter(
+        (pl.col("ANO_EGRESO") >= ano_inicio) & (pl.col("ANO_EGRESO") <= ano_termino)
+    )
+
+    # Obtiene las metricas desagregadas por anio
+    metricas_desagregadas = obtener_metricas_egresos(df_filtrada, ["ANO_EGRESO", "DIAG1"])
+    metricas_desagregadas = metricas_desagregadas.sort(["ANO_EGRESO", "n_egresos"], descending=True)
+
+    # Obtiene las metricas agrupadas en el periodo determinado
+    metricas_agrupadas = obtener_metricas_egresos(df_filtrada, ["DIAG1"])
+    metricas_agrupadas = metricas_agrupadas.sort(["DIAG1"], descending=True)
+
+    # Convierte los resumenes a pandas
+    metricas_desagregadas = metricas_desagregadas.to_pandas()
+    metricas_agrupadas = metricas_agrupadas.to_pandas().set_index("DIAG1")
+
+    # Pivota la tabla desagregada
+    metricas_desagregadas = pd.pivot_table(
+        metricas_desagregadas,
         index="DIAG1",
         columns="ANO_EGRESO",
-        values=["n_pacientes_distintos", "n_egresos", "dias_estada_totales", "n_int_q"],
+        values=["n_egresos", "n_pacientes_distintos", "dias_estada_totales"],
         aggfunc="sum",
         fill_value=0,
-    ).sort_index()
+    )
 
-    # Obtiene dias de estada promedio
-    dias_estada_promedio = metricas["dias_estada_totales"] / metricas["n_egresos"]
-    dias_estada_promedio.columns = [
-        ("dias_estada_promedio", i) for i in dias_estada_promedio.columns
+    # Cambia las columnas de la tabla agrupada en el periodo
+    columnas_agrupado = [
+        (f"agrupado_entre_{ano_inicio}_{ano_termino}", col) for col in metricas_agrupadas.columns
     ]
+    metricas_agrupadas.columns = pd.MultiIndex.from_tuples(columnas_agrupado)
 
-    # Obtiene los dias de estada promedio de todos los anios acumulados
-    dias_estada_promedio_agrupado_en_anios = (
-        metricas["dias_estada_totales"].sum(axis=1) / metricas["n_egresos"].sum(axis=1)
-    ).to_frame()
-    dias_estada_promedio_agrupado_en_anios.columns = [
-        ("dias_estada_promedio_agrupado", "2017-2019")
-    ]
+    # Concatena las metircs desagregadas y agregadas
+    resumen = pd.concat([metricas_desagregadas, metricas_agrupadas], axis=1)
 
-    # Obtiene egresos por paciente
-    egresos_por_paciente = metricas["n_egresos"] / metricas["n_pacientes_distintos"]
-    egresos_por_paciente.columns = [
-        ("egresos_por_paciente", i) for i in egresos_por_paciente.columns
-    ]
-
-    # Obtiene la cantidad de egresos por paciente de todos los anios acumulados
-    egresos_por_paciente_agrupado_en_anios = (
-        metricas["n_egresos"].sum(axis=1) / metricas["n_pacientes_distintos"].sum(axis=1)
-    ).to_frame()
-
-    egresos_por_paciente_agrupado_en_anios.columns = [
-        ("egresos_por_paciente_agrupado", "2017-2019")
-    ]
-
-    # Obtiene la cantidad de int. q. por egresos
-    int_q_por_egresos = metricas["n_int_q"] / metricas["n_egresos"]
-    int_q_por_egresos.columns = [("porcentaje_de_int_q", i) for i in int_q_por_egresos.columns]
-
-    # Obtiene el porcentaje de int. q. acumuladas entre el periodo analizado
-    int_q_agrupadas = (
-        metricas["n_int_q"].sum(axis=1) / metricas["n_egresos"].sum(axis=1)
-    ).to_frame()
-    int_q_agrupadas.columns = [("porcentaje_int_q_agrupado", "2017-2019")]
-
-    metricas = pd.concat([metricas, egresos_por_paciente], axis=1)
-    metricas = pd.concat([metricas, egresos_por_paciente_agrupado_en_anios], axis=1)
-    metricas = pd.concat([metricas, dias_estada_promedio], axis=1)
-    metricas = pd.concat([metricas, dias_estada_promedio_agrupado_en_anios], axis=1)
-    metricas = pd.concat([metricas, int_q_por_egresos], axis=1)
-    metricas = pd.concat([metricas, int_q_agrupadas], axis=1)
-
-    return metricas
+    return resumen
