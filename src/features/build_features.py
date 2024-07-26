@@ -492,7 +492,7 @@ def obtener_camas(camas_al_2035, fraccion_uci, fraccion_uti, fraccion_medias):
     camas_uci = camas_al_2035 * fraccion_uci
     camas_uti = camas_al_2035 * fraccion_uti
     camas_medias = camas_al_2035 * fraccion_medias
-    return camas_uci, camas_uti, camas_medias
+    return camas_al_2035, camas_uci, camas_uti, camas_medias
 
 
 def ajustar_camas(camas, multiplicador, metodo="ceil"):
@@ -514,7 +514,7 @@ def calcular_camas_ajustadas(
     multiplos_medias,
     metodo="ceil",
 ):
-    camas_uci, camas_uti, camas_medias = obtener_camas(
+    total_camas, camas_uci, camas_uti, camas_medias = obtener_camas(
         camas_al_2035, fraccion_uci, fraccion_uti, fraccion_medias
     )
 
