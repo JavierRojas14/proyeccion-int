@@ -1,5 +1,6 @@
 import datetime
 import calendar
+import math
 
 import pandas as pd
 import polars as pl
@@ -485,3 +486,49 @@ def calcular_resumen_metricas_desagregadas_y_agrupadas_en_anios(df, ano_inicio, 
     resumen = pd.concat([metricas_desagregadas, metricas_agrupadas], axis=1)
 
     return resumen
+
+
+def obtener_camas(camas_al_2035, fraccion_uci, fraccion_uti, fraccion_medias):
+    camas_uci = camas_al_2035 * fraccion_uci
+    camas_uti = camas_al_2035 * fraccion_uti
+    camas_medias = camas_al_2035 * fraccion_medias
+    return camas_uci, camas_uti, camas_medias
+
+
+def ajustar_camas(camas, multiplicador, metodo="ceil"):
+    if metodo == "ceil":
+        return math.ceil(camas / multiplicador) * multiplicador
+    elif metodo == "round":
+        return round(camas / multiplicador) * multiplicador
+    else:
+        raise ValueError("El método debe ser 'ceil' o 'round'.")
+
+
+def calcular_camas_ajustadas(
+    camas_al_2035,
+    fraccion_uci,
+    fraccion_uti,
+    fraccion_medias,
+    multiplos_uci,
+    multiplos_uti,
+    multiplos_medias,
+    metodo="ceil",
+):
+    camas_uci, camas_uti, camas_medias = obtener_camas(
+        camas_al_2035, fraccion_uci, fraccion_uti, fraccion_medias
+    )
+
+    camas_uti_ajustadas_a_norma = ajustar_camas(camas_uti, multiplos_uti, metodo)
+    camas_uci_ajustadas_a_norma = camas_uti_ajustadas_a_norma / 2
+    camas_medias_ajustadas_a_norma = ajustar_camas(camas_medias, multiplos_medias, metodo)
+
+    total_camas_ajustadas = (
+        camas_uti_ajustadas_a_norma + camas_uci_ajustadas_a_norma + camas_medias_ajustadas_a_norma
+    )
+
+    return (
+        total_camas_ajustadas,
+        camas_uci_ajustadas_a_norma,
+        camas_uti_ajustadas_a_norma,
+        camas_medias_ajustadas_a_norma,
+    )
