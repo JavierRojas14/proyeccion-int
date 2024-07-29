@@ -80,7 +80,7 @@ def cargar_duraciones_int_q(ruta, diags_area_de_influencia):
     df["diag_01_principal_cod"] = (
         df["diag_01_principal_cod"].str.replace(".", "", regex=False).str.ljust(4, "X")
     )
-    df["diag_01_principal_cod"] = df["diag_01_principal_cod"].str.replace("C341", "C34N")
+
     df = df.query("diag_01_principal_cod.isin(@diags_area_de_influencia)").set_index(
         "diag_01_principal_cod"
     )
