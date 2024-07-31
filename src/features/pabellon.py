@@ -95,6 +95,28 @@ def cargar_duraciones_int_q(ruta, diags_area_de_influencia):
     return duraciones
 
 
+def reasignar_diagnosticos(df, columna_diag, df_diagnosticos_a_reasignar):
+    """
+    Reasigna los códigos de diagnósticos en la base de datos.
+
+    Args:
+        df (DataFrame): Base de datos que contiene los diagnósticos a reasignar.
+        columna_diag: Nombre de la columna que indica los diagnosticos en la base original
+        diagnosticos_a_reasignar (DataFrame): DataFrame que contiene los códigos nuevos y
+        antiguos de los diagnósticos.
+
+    Returns:
+        DataFrame: Base de datos con los diagnósticos actualizados.
+    """
+    df = df.copy()
+    for row in df_diagnosticos_a_reasignar.itertuples(index=False):
+        diagnostico_nuevo, diagnosticos_antiguos = row
+        print(f"Cambiando {diagnosticos_antiguos} a {diagnostico_nuevo}")
+        df[columna_diag] = df[columna_diag].replace(diagnosticos_antiguos, diagnostico_nuevo)
+
+    return df
+
+
 def calcular_tiempo_utilizado_pabellon(casos_quirurgicos, duraciones_int_q):
     """
     Calcula el tiempo utilizado en pabellón multiplicando casos quirúrgicos por duraciones.
