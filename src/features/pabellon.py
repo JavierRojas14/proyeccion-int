@@ -69,6 +69,14 @@ def calcular_casos_quirurgicos(casos_area_de_influencia, porcentajes_de_quirurgi
     return casos_quirurgicos
 
 
+def calcular_casos_quirurgicos_por_especialidad(casos_quirurgicos, especialidades):
+    tmp = casos_quirurgicos.copy()
+    tmp["especialidades"] = especialidades
+    tmp = tmp.groupby("especialidades").sum()
+
+    return tmp
+
+
 def cargar_duraciones_int_q(ruta, diags_area_de_influencia):
     """
     Carga y filtra las duraciones de intervenciones quirúrgicas por diagnóstico.
