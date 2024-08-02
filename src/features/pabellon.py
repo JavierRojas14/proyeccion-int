@@ -220,7 +220,7 @@ def iterar_en_complicaciones_a_buscar(df, dict_textos_a_buscar, tipo_complicacio
         tiempo_pabellon_75 = df_filtrada["duracion"].describe()["75%"]
 
         # Concatena resultados acumulados en el periodo por complicacion
-        resultado_acumulado = resumen_filtrado[2].reset_index()
+        resultado_acumulado = resumen_filtrado[2]
         resultado_acumulado["complicacion"] = nombre_complicacion
         resultado_acumulado["texto_a_buscar"] = textos_a_buscar
         resultado_acumulado["tiempo_operacion_75%"] = tiempo_pabellon_75
