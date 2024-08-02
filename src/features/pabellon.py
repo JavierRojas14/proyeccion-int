@@ -38,11 +38,15 @@ def cargar_porcentajes_de_quirurgicos(ruta):
     """
     df = pd.read_excel(ruta, sheet_name="porcentajes_trazadoras")
     df["Diagnostico"] = df["Diagnostico"].str.split(" - ").str[0]
-    porcentajes = df.set_index("Diagnostico")["Porcentaje Quirúrgico"].dropna()
+    df = df.set_index("Diagnostico").dropna(subset="Porcentaje Quirúrgico")
+
+    porcentajes = df["Porcentaje Quirúrgico"].replace(["Separado", "Preguntar"], "0").astype(float)
+    especialidades = df["Especialidad Quirurgica"]
+
     print("Porcentajes quirúrgicos cargados y formateados:")
     print(tabulate(porcentajes.head().reset_index(), headers="keys", tablefmt="pretty"))
     print()
-    return porcentajes
+    return porcentajes, especialidades
 
 
 def calcular_casos_quirurgicos(casos_area_de_influencia, porcentajes_de_quirurgicos):
