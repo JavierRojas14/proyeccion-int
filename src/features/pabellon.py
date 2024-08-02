@@ -77,36 +77,6 @@ def calcular_casos_quirurgicos_por_especialidad(casos_quirurgicos, especialidade
     return tmp
 
 
-def cargar_duraciones_int_q(ruta, diags_area_de_influencia):
-    """
-    Carga y filtra las duraciones de intervenciones quirúrgicas por diagnóstico.
-
-    Args:
-    ruta (str): Ruta del archivo de Excel.
-    diags_area_de_influencia (Index): Diagnósticos del área de influencia.
-
-    Returns:
-    Series: Duraciones promedio de intervenciones quirúrgicas por diagnóstico.
-    """
-    df = pd.read_excel(ruta)
-    df["diag_01_principal_cod"] = (
-        df["diag_01_principal_cod"].str.replace(".", "", regex=False).str.ljust(4, "X")
-    )
-
-    df = df.query("diag_01_principal_cod.isin(@diags_area_de_influencia)").set_index(
-        "diag_01_principal_cod"
-    )
-
-    # Convierte las duraciones a tiempo
-    columnas_duracion = ["mean", "std", "min", "25%", "50%", "75%", "max"]
-    df[columnas_duracion] = df[columnas_duracion].apply(lambda x: pd.to_timedelta(x, unit="D"))
-    duraciones = df.query("ano_de_egreso == 2019")["mean"]
-    print("Duraciones de intervenciones quirúrgicas cargadas y filtradas:")
-    print(tabulate(duraciones.head().reset_index(), headers="keys", tablefmt="pretty"))
-    print()
-    return duraciones
-
-
 def reasignar_diagnosticos(df, columna_diag, df_diagnosticos_a_reasignar):
     """
     Reasigna los códigos de diagnósticos en la base de datos.
@@ -243,19 +213,17 @@ def iterar_en_complicaciones_a_buscar(df, dict_textos_a_buscar, tipo_complicacio
     funcion_a_ocupar_para_buscar = busqueda_a_realizar[tipo_complicacion]
 
     # Itera por el diccionario de busqueda y guarda los resultados
-    resultados = {}
     df_resultado = pd.DataFrame()
     for nombre_complicacion, textos_a_buscar in dict_textos_a_buscar.items():
         df_filtrada = funcion_a_ocupar_para_buscar(df, textos_a_buscar)
         resumen_filtrado = obtener_resumen_ocurrencia_complicacion(df, df_filtrada)
-        resultados[nombre_complicacion] = resumen_filtrado
-
-        # print(f"> {nombre_complicacion}: {resumen_filtrado[2]}")
+        tiempo_pabellon_75 = df_filtrada["duracion"].describe()["75%"]
 
         # Concatena resultados acumulados en el periodo por complicacion
         resultado_acumulado = resumen_filtrado[2].reset_index()
         resultado_acumulado["complicacion"] = nombre_complicacion
         resultado_acumulado["texto_a_buscar"] = textos_a_buscar
+        resultado_acumulado["tiempo_operacion_75%"] = tiempo_pabellon_75
         df_resultado = pd.concat([df_resultado, resultado_acumulado])
 
-    return resultados, df_resultado
+    return df_resultado
