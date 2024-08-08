@@ -326,3 +326,29 @@ def obtener_camas(camas_al_2035, fraccion_uci, fraccion_uti, fraccion_medias):
     camas_uti = camas_al_2035 * fraccion_uti
     camas_medias = camas_al_2035 * fraccion_medias
     return camas_al_2035, camas_uci, camas_uti, camas_medias
+
+
+def leer_casos_area_de_influencia(columnas_poblacion_interes):
+    # Obtiene los casos de area de influencia
+    casos_area_de_influencia = pd.read_excel(
+        "../data/interim/casos_teoricos_diagnosticos.xlsx",
+        sheet_name="casos_area_de_influencia_INT",
+    )
+
+    # Preprocesa el diagnostico
+    casos_area_de_influencia["Diagnostico"] = (
+        casos_area_de_influencia["Diagnostico"].str.split(" - ").str[0]
+    )
+
+    # Preprocesa los diagnosticos agrupados
+    casos_area_de_influencia["Diagnosticos Contenidos"] = casos_area_de_influencia[
+        "Diagnosticos Contenidos"
+    ].str.split(", ")
+
+    # Renombra columnas de la poblacion
+    casos_area_de_influencia = casos_area_de_influencia.rename(columns=columnas_poblacion_interes)
+
+    # Pone como indice el diagnostico
+    casos_area_de_influencia = casos_area_de_influencia.set_index("Diagnostico")
+
+    return casos_area_de_influencia
