@@ -173,36 +173,6 @@ def calcular_feriados_por_mes(ano_inicio, ano_termino, pais):
     return feriados_periodo
 
 
-def calcular_fin_de_semana_por_mes(ano_inicio, ano_termino):
-    """Funcion que permite obtener la cantidad de fin de semanas por mes"""
-    fin_de_semana = pd.DataFrame(
-        index=pd.bdate_range(
-            start=f"{ano_inicio}-01-01",
-            end=f"{ano_termino}-12-31",
-            freq="C",
-            weekmask="Sat Sun",
-        )
-    )
-    fin_de_semana["n_fin_de_semanas"] = 1
-    fin_de_semana = fin_de_semana.resample("M").sum()["n_fin_de_semanas"]
-
-    return fin_de_semana
-
-
-def calcular_dias_laborales_por_mes(ano_inicio, ano_termino):
-    """Funcion que permite obtener la cantidad de dias laborales por mes. Aquí se incluyen los
-    días feriados."""
-
-    dias_laborales = pd.DataFrame(
-        index=pd.bdate_range(start=f"{ano_inicio}-01-01", end=f"{ano_termino}-12-31", freq="B")
-    )
-
-    dias_laborales["n_dias_laborales"] = 1
-    dias_laborales = dias_laborales.resample("M").sum()["n_dias_laborales"]
-
-    return dias_laborales
-
-
 def days_in_year(year=datetime.datetime.now().year):
     return 365 + calendar.isleap(year)
 
