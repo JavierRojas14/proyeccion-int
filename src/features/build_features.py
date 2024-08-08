@@ -162,120 +162,6 @@ def obtener_porcentaje_de_fonasa_pais(poblaciones_ine, poblaciones_fonasa, anios
     return resumen_porcentaje_fonasa
 
 
-def multiple_dfs(df_dict, file_name, spaces):
-    with pd.ExcelWriter(file_name) as writer:
-        row = 0
-        for key, df in df_dict.items():
-            # Creates table header and writes it
-            df_name = pd.Series()
-            df_name.name = key
-            df_name.to_excel(writer, startrow=row)
-            row += 1
-
-            # Saves DataFrame and updates row
-            df.to_excel(writer, startrow=row)
-            row += len(df.index) + spaces + 1
-
-
-def assign_diagnosis(df, diag_code, new_diag1, new_diag2):
-    """
-    Creates two new DataFrames with the specified diagnosis assigned to DIAG1 and DIAG2 respectively,
-    and returns the original DataFrame without modifications.
-
-    Args:
-        df (pandas.DataFrame): The original DataFrame.
-        diag_code (str): The diagnosis code to be reassigned.
-        new_diag1 (str): The new diagnosis code to be assigned to DIAG1.
-        new_diag2 (str): The new diagnosis code to be assigned to DIAG2.
-
-    Returns:
-        pandas.DataFrame: The original DataFrame without modifications.
-        pandas.DataFrame: The DataFrame with the first diagnosis assigned to DIAG1.
-        pandas.DataFrame: The DataFrame with the second diagnosis assigned to DIAG2.
-    """
-
-    # Filter rows with the specified diagnosis code
-    filtered_df = df.query(f"DIAG1 == '{diag_code}'")
-
-    # Create new DataFrames with the specified diagnoses assigned to DIAG1 and DIAG2
-    df_diag1 = filtered_df.copy()
-    df_diag1["DIAG1"] = new_diag1
-
-    df_diag2 = filtered_df.copy()
-    df_diag2["DIAG1"] = new_diag2
-
-    # Filters the specified diagnosis code out of the original DataFrame
-    filtered_df_without_original_diagnosis = df.query(f"DIAG1 != '{diag_code}'")
-
-    # Combine the modified DataFrames with the original DataFrame
-    modified_df = pd.concat([filtered_df_without_original_diagnosis, df_diag1, df_diag2])
-
-    # Return the original DataFrame and the modified DataFrames
-    return modified_df
-
-
-def preprocesar_egresos_multivariado(df):
-    tmp = df.copy()
-
-    # Genera variable y
-    # Corresponde a los egresos del proximo mes
-    tmp["n_egresos_proximo_mes"] = tmp.groupby("DIAG1")["n_egresos"].shift(-1)
-    tmp = tmp.dropna()
-
-    # Genera variables X (Lag, Diff, Rolling Mean y Variables de Fechas)
-    tmp = create_grouped_lag_features(tmp, "n_egresos", "DIAG1", [1, 2, 3, 11, 12, 24])
-    tmp["diff_1"] = tmp.groupby("DIAG1")["n_egresos"].diff(1)
-    tmp["mean_4"] = (
-        tmp.groupby("DIAG1")["n_egresos"].rolling(4).mean().reset_index(level=0, drop=True)
-    )
-
-    # Pone la fecha como indice y agrega variables relacionadas a la fecha
-    tmp = tmp.set_index("FECHA_EGRESO")
-    tmp = add_time_series_columns_by_month(tmp)
-
-    return tmp
-
-
-def add_time_series_columns_by_month(df):
-    """
-    Add time series related columns to a DataFrame with a DateTimeIndex aggregated by month.
-
-    Parameters:
-    - df: pandas DataFrame with a single continuous column and a DateTimeIndex aggregated by month.
-
-    Returns:
-    - pandas DataFrame with added time series related columns.
-    """
-    df = df.copy()
-    # Extract date-related information
-    df["quarter"] = df.index.quarter
-    df["month"] = df.index.month
-    df["year"] = df.index.year
-    df["season"] = (df["month"] % 12 + 3) // 3  # Calculate season based on month
-    df["is_leap_year"] = df["is_leap_year"] = df.index.is_leap_year.astype(int)
-
-    # Check if the month is part of the start/end of the quarter
-    df["is_quarter_start"] = df.index.is_quarter_start.astype(int)
-    df["is_quarter_end"] = df.index.is_quarter_end.astype(int)
-
-    # Calculate days per month
-    df["days_in_month"] = df.index.days_in_month
-
-    anio_inicio = df.index[0].year
-    anio_termino = df.index[-1].year
-
-    # Calculate holidays per month
-    df["holidays_per_month"] = calcular_feriados_por_mes(anio_inicio, anio_termino, "CL")
-
-    # Calculate weekends per month
-    df["weekends_per_month"] = calcular_fin_de_semana_por_mes(anio_inicio, anio_termino)
-
-    # Calculate business days per month
-    df["business_days_per_month"] = calcular_dias_laborales_por_mes(anio_inicio, anio_termino)
-
-    return df
-
-
 def calcular_feriados_por_mes(ano_inicio, ano_termino, pais):
     # Obtiene feriados en el periodo
     feriados_periodo = country_holidays(pais, years=[i for i in range(ano_inicio, ano_termino + 1)])
@@ -315,47 +201,6 @@ def calcular_dias_laborales_por_mes(ano_inicio, ano_termino):
     dias_laborales = dias_laborales.resample("M").sum()["n_dias_laborales"]
 
     return dias_laborales
-
-
-def create_lag_features(df, column_name, lag_values, fill_value=None):
-    """
-    Create lag features in a DataFrame for a specific column.
-
-    Parameters:
-    - df: DataFrame
-        The input DataFrame.
-    - column_name: str
-        The name of the column for which lag features will be created.
-    - lag_values: list of ints
-        A list of lag values.
-    - fill_value: int or None, default=None
-        The value to fill NaNs in lag features. If None, NaNs in lag features are left as NaNs.
-
-    Returns:
-    - new_df: DataFrame
-        A new DataFrame with lag features and filled NaNs in lag features.
-    """
-    new_df = df.copy()
-
-    for lag in lag_values:
-        new_column = f"{column_name}_lag_{lag}"
-        new_df[new_column] = new_df[column_name].shift(lag)
-        if fill_value is not None:
-            new_df[new_column] = new_df[new_column].fillna(fill_value)
-
-    return new_df
-
-
-def create_grouped_lag_features(df, column_name, grouping_column, lag_values, fill_value=None):
-    new_df = df.copy()
-
-    for lag in lag_values:
-        new_column = f"{column_name}_lag_{lag}"
-        new_df[new_column] = new_df.groupby(grouping_column)[column_name].shift(lag)
-        if fill_value is not None:
-            new_df[new_column] = new_df[new_column].fillna(fill_value)
-
-    return new_df
 
 
 def days_in_year(year=datetime.datetime.now().year):
@@ -416,18 +261,6 @@ def obtener_tabla_resumen_egresos(
     )
 
     return tabla_resumen_ppt
-
-
-def to_sequences(dataset, seq_size=1):
-    x = []
-    y = []
-
-    for i in range(len(dataset) - seq_size):
-        window = dataset[i : (i + seq_size), 0]
-        x.append(window)
-        y.append(dataset[i + seq_size, 0])
-
-    return np.array(x), np.array(y)
 
 
 def obtener_metricas_egresos(df, agrupacion):
