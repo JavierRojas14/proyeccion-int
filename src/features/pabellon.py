@@ -8,24 +8,6 @@ ANIO_TERMINO = 2035
 COLUMNAS_POBLACION_INE = [f"{i}" for i in range(ANIO_INICIO, ANIO_TERMINO + 1)]
 
 
-def cargar_casos_area_de_influencia(ruta):
-    """
-    Carga los casos del área de influencia y formatea los diagnósticos.
-
-    Args:
-    ruta (str): Ruta del archivo de Excel.
-
-    Returns:
-    DataFrame: Casos del área de influencia con diagnósticos formateados.
-    """
-    df = pd.read_excel(ruta, sheet_name="casos_area_de_influencia_INT")
-    df["Diagnostico"] = df["Diagnostico"].str.split(" - ").str[0]
-    print("Casos del área de influencia cargados y formateados:")
-    print(tabulate(df.head(), headers="keys", tablefmt="pretty"))
-    print()
-    return df.set_index("Diagnostico")
-
-
 def cargar_porcentajes_de_quirurgicos(ruta):
     """
     Carga los porcentajes de quirúrgicos y formatea los diagnósticos.
